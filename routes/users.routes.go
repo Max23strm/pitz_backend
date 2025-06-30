@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/Max23strm/pitz-backend/db"
@@ -24,7 +23,6 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.Write([]byte("Error en la peticion"))
 		}
-		fmt.Println()
 		datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &dato.Positions, &dato.Email)
 		players = append(players, dato)
 	}

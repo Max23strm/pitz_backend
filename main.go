@@ -17,10 +17,20 @@ func main() {
 
 	r.HandleFunc("/home", routes.HomeHanlder)
 
+	//USERS - PLAYERS
 	r.HandleFunc("/users", routes.GetUsersHandler).Methods("GET")
 	r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
 	r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
 	r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
+
+	//EVENTS
+	r.HandleFunc("/events", routes.GetEventsHandler).Methods("GET")
+
+	//EVENT TYPES
+	r.HandleFunc("/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
+	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
+	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
+	// r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
 
 	http.ListenAndServe(":3050", r)
 }
