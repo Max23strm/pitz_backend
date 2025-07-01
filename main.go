@@ -7,27 +7,30 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const baseUrl = "/api"
+
 // docker run --name some-postgres -e ¨PSTGRES_USER=max -e POSTGRES_PASSWORD=secretpassword -d postgres
 func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/loginSession", routes.LoginSession)
-	r.HandleFunc("/passwordRestoration", routes.RestorePassword)
+	r.HandleFunc(baseUrl+"/loginSession", routes.LoginSession)
+	r.HandleFunc(baseUrl+"/passwordRestoration", routes.RestorePassword)
 
-	r.HandleFunc("/home", routes.HomeHanlder)
+	r.HandleFunc(baseUrl+"/home", routes.HomeHanlder)
 
 	//USERS - PLAYERS
-	r.HandleFunc("/users", routes.GetUsersHandler).Methods("GET")
-	r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
-	r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
-	r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/players", routes.GetPlayersHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/players", routes.PostPlayerHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/players", routes.DeletePlayerHandler).Methods("DELETE")
+	r.HandleFunc(baseUrl+"/players/{id:[0-9]+}", routes.GetPlayerHandler).Methods("GET")
 
 	//EVENTS
-	r.HandleFunc("/events", routes.GetEventsHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/events", routes.GetEventsHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/events/{id}", routes.GetEventByIdHandler).Methods("GET")
 
 	//EVENT TYPES
-	r.HandleFunc("/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
 	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
 	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
 	// r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
