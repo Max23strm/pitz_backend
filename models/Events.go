@@ -25,5 +25,16 @@ type EventType struct {
 	Type_name      string `json:"evebt_type_name"`
 }
 
+type Asistance struct {
+	Event_uid          string `json:"event_uid"`
+	Player_uid         string `json:"player_uid"`
+	Asistance_type_uid string `json:"asistance_type_uid"`
+	Name               string `json:"asistance_name"`
+	Date               string `json:"event_date"`
+	Event_name         string `json:"event_name"`
+}
+
+type Asistances []Asistance
+
 type Events []Event
 type EventsTypes []EventType

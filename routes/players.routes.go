@@ -2,10 +2,12 @@ package routes
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/Max23strm/pitz-backend/db"
 	"github.com/Max23strm/pitz-backend/models"
+	"github.com/gorilla/mux"
 )
 
 func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +32,26 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(players)
 }
-func GetPlayerHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Get specific user"))
+
+func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
+	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, assignedpositions.positions, players.address FROM players INNER JOIN assignedpositions ON players.player_uid = assignedpositions.player_uid WHERE players.player_uid = ?"
+	db.DBconnection()
+	vars := mux.Vars(r)
+
+	playerRow := db.DB.QueryRow(playerSql, vars["id"])
+
+	player := models.PlayerDetails{}
+
+	err := playerRow.Scan(&player.GeneralInfo.Player_uid, &player.GeneralInfo.FirstName, &player.GeneralInfo.LastName, &player.GeneralInfo.Email, &player.GeneralInfo.Status, &player.GeneralInfo.Positions, &player.Address)
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		log.Fatal("Error obteniendo jugador: ", err)
+		json.NewEncoder(w).Encode(err)
+	}
+
+	defer db.CerrarConexion()
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(player)
 }
 
 func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {

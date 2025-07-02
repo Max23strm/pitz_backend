@@ -23,7 +23,7 @@ func main() {
 	r.HandleFunc(baseUrl+"/players", routes.GetPlayersHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/players", routes.PostPlayerHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/players", routes.DeletePlayerHandler).Methods("DELETE")
-	r.HandleFunc(baseUrl+"/players/{id:[0-9]+}", routes.GetPlayerHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/players/{id}", routes.GetPlayerByIdHandler).Methods("GET")
 
 	//EVENTS
 	r.HandleFunc(baseUrl+"/events", routes.GetEventsHandler).Methods("GET")
@@ -31,6 +31,10 @@ func main() {
 
 	//EVENT TYPES
 	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
+
+	//ASISTANCE TYPES
+	r.HandleFunc(baseUrl+"/asistanceTypes", routes.GetAsistanceTypesHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/asistanceByPlayerId/{id}", routes.GetAsistancePlayerbyIdHandler).Methods("GET")
 	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
 	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
 	// r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
