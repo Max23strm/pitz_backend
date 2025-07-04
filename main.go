@@ -28,6 +28,8 @@ func main() {
 	//EVENTS
 	r.HandleFunc(baseUrl+"/events", routes.GetEventsHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/events/{id}", routes.GetEventByIdHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/events/newEvent", routes.NewEventHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/events/editEvent/{id}", routes.EditEventHandler).Methods("PUT")
 
 	//EVENT TYPES
 	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
