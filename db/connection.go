@@ -9,10 +9,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var DSN = "host=localhost user=max password=secretpassword dbname=gorm port=5001"
-
-// var DSN = "host=localhost user=postgres password=mysecretpassword dbname=gorm port=5432"
-
 var DB *sql.DB
 
 func DBconnection() {
@@ -31,5 +27,3 @@ func DBconnection() {
 func CerrarConexion() {
 	DB.Close()
 }
-
-//Concectarnos a la BD
