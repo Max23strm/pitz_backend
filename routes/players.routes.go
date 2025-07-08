@@ -22,10 +22,21 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 
 	for datos.Next() {
 		dato := models.Player{}
+		var positionsStr string
+		err := datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &positionsStr, &dato.Email)
 		if err != nil {
-			w.Write([]byte("Error en la peticion"))
+			w.WriteHeader(http.StatusOK)
+			log.Fatal("Error obteniendo datos: ", err)
+			json.NewEncoder(w).Encode(err)
 		}
-		datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &dato.Positions, &dato.Email)
+		err = json.Unmarshal([]byte(positionsStr), &dato.Positions)
+
+		if err != nil {
+			w.WriteHeader(http.StatusOK)
+			log.Fatal("Transformando posiciones: ", err)
+			json.NewEncoder(w).Encode(err)
+		}
+
 		players = append(players, dato)
 	}
 	defer db.CerrarConexion()

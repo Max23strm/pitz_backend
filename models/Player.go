@@ -8,7 +8,7 @@ type Player struct {
 	LastName   string `json:"last_name"`
 	Email      string `json:"email"`
 	Status     int16  `json:"status"`
-	Positions  string `json:"positions"`
+	Positions  []int8 `json:"positions"`
 }
 
 type PlayerDetails struct {

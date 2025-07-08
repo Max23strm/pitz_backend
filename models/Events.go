@@ -43,7 +43,7 @@ type EventUpdate struct {
 
 type EventType struct {
 	Event_type_uid string `json:"event_type_uid"`
-	Type_name      string `json:"evebt_type_name"`
+	Type_name      string `json:"event_type_name"`
 }
 
 type Asistance struct {
