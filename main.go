@@ -56,6 +56,7 @@ func main() {
 
 	//PAYMENTS
 	r.HandleFunc(baseUrl+"/payments", routes.GetMonthPaymentsHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/payments/new-payment", routes.PostMonthPaymentsHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/paymentsTypes", routes.GetPaymentTypesHandler).Methods("GET")
 	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
 	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
