@@ -45,7 +45,7 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
-	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, assignedpositions.positions, players.address FROM players INNER JOIN assignedpositions ON players.player_uid = assignedpositions.player_uid WHERE players.player_uid = ?"
+	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, players.address, players.birth_dt, players.comments, players.blood_type, players.afiliation, players.sex, players.curp, players.enfermedad, players.phone_number, players.emergency_phone, players.insurance, players.insurance_name FROM players INNER JOIN assignedpositions ON players.player_uid = assignedpositions.player_uid WHERE players.player_uid = ?"
 	db.DBconnection()
 	vars := mux.Vars(r)
 
@@ -53,7 +53,7 @@ func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	player := models.PlayerDetails{}
 
-	err := playerRow.Scan(&player.GeneralInfo.Player_uid, &player.GeneralInfo.FirstName, &player.GeneralInfo.LastName, &player.GeneralInfo.Email, &player.GeneralInfo.Status, &player.GeneralInfo.Positions, &player.Address)
+	err := playerRow.Scan(&player.Player_uid, &player.FirstName, &player.LastName, &player.Email, &player.Status, &player.Address, &player.Birth_dt, &player.Comments, &player.BloodType, &player.Afiliation, &player.Sex, &player.Curp, &player.Enfermedad, &player.Phone_number, &player.Emergency_number, &player.Insurance, &player.Insurance_name)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		log.Fatal("Error obteniendo jugador: ", err)
