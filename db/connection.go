@@ -17,7 +17,7 @@ func DBconnection() {
 		panic(errorVariables)
 	}
 
-	conection, err := sql.Open("mysql", os.Getenv("DB_USER")+":"+"@tcp("+os.Getenv("DB_SERVER")+":"+os.Getenv("DB_PORT")+")/"+os.Getenv("DB_NAME")+"?parseTime=true")
+	conection, err := sql.Open("mysql", os.Getenv("DB_USER")+":"+os.Getenv("DB_PASSWORD")+"@tcp("+os.Getenv("DB_SERVER")+":"+os.Getenv("DB_PORT")+")/"+os.Getenv("DB_NAME")+"?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
