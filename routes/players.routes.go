@@ -2,17 +2,20 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/Max23strm/pitz-backend/db"
 	"github.com/Max23strm/pitz-backend/models"
+	"github.com/Max23strm/pitz-backend/validations"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 	db.DBconnection()
-	playersSql := "SELECT players.player_uid, first_name, last_name, status, assignedpositions.positions, email FROM players  INNER JOIN assignedpositions ON players.player_uid = assignedpositions.player_uid"
+	playersSql := "SELECT players.player_uid, first_name, last_name, status, email FROM players"
 	players := models.Players{}
 
 	datos, err := db.DB.Query(playersSql)
@@ -22,18 +25,10 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 
 	for datos.Next() {
 		dato := models.Player{}
-		var positionsStr string
-		err := datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &positionsStr, &dato.Email)
+		err := datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &dato.Email)
 		if err != nil {
 			w.WriteHeader(http.StatusOK)
 			log.Fatal("Error obteniendo datos: ", err)
-			json.NewEncoder(w).Encode(err)
-		}
-		err = json.Unmarshal([]byte(positionsStr), &dato.Positions)
-
-		if err != nil {
-			w.WriteHeader(http.StatusOK)
-			log.Fatal("Transformando posiciones: ", err)
 			json.NewEncoder(w).Encode(err)
 		}
 
@@ -66,11 +61,65 @@ func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
-	// var user models.Player
+	var player models.PostPlayerDetails
+	new_uuid := uuid.New()
 
-	// json.NewDecoder(r.Body).Decode(&user)
+	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
+		fmt.Println(err)
+		respuesta := map[string]string{
+			"estado":  "Error",
+			"mensaje": "Error al obtener datos",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
 
-	w.Write([]byte("Create user"))
+	//Validacion de campos requeridos
+	validationErrors := validations.PlayersPostValidations(player)
+
+	if len(validationErrors) > 0 {
+
+		var errors []string
+		errors = append(errors, validationErrors...)
+
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   errors,
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	sqlString := "INSERT INTO `players` (`player_uid`, `first_name`, `last_name`, `phone_number`, `emergency_phone`, `email`, `status`, `positions`, `birth_dt`, `blood_type`, `comments`, `credential`, `address`, `afiliation`, `sex`, `curp`, `enfermedad`, `insurance`, `insurance_name`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
+	db.DBconnection()
+	_, err := db.DB.Exec(sqlString, new_uuid.String(), player.FirstName, player.LastName, player.Phone_number, player.Emergency_number, player.Email, player.Status, nil, player.Birth_dt, player.BloodType, player.Comments, player.Credential, player.Address, player.Afiliation, player.Sex, player.Curp, player.Enfermedad, player.Insurance, player.Insurance_name)
+
+	if err != nil {
+		fmt.Println(err)
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error al enviar informaciín",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+
+	uuidResponse := map[string]interface{}{
+		"isSuccess":  true,
+		"estado":     "Creado",
+		"player_uid": new_uuid.String(),
+	}
+	defer db.CerrarConexion()
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(uuidResponse)
 }
 
 func DeletePlayerHandler(w http.ResponseWriter, r *http.Request) {

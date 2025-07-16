@@ -37,7 +37,7 @@ func main() {
 
 	//USERS - PLAYERS
 	r.HandleFunc(baseUrl+"/players", routes.GetPlayersHandler).Methods("GET")
-	r.HandleFunc(baseUrl+"/players", routes.PostPlayerHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/players/newPlayer", routes.PostPlayerHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/players", routes.DeletePlayerHandler).Methods("DELETE")
 	r.HandleFunc(baseUrl+"/players/{id}", routes.GetPlayerByIdHandler).Methods("GET")
 
