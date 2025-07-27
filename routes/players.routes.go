@@ -3,7 +3,6 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -21,16 +20,30 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 
 	datos, err := db.DB.Query(playersSql)
 	if err != nil {
-		w.Write([]byte("Error en la peticion"))
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo jugadores: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
 	}
 
 	for datos.Next() {
 		dato := models.Player{}
 		err := datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &dato.Email)
 		if err != nil {
-			w.WriteHeader(http.StatusOK)
-			log.Fatal("Error obteniendo datos: ", err)
-			json.NewEncoder(w).Encode(err)
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "Error obteniendo datos: " + err.Error(),
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(respuesta)
+
+			return
 		}
 
 		players = append(players, dato)
@@ -51,7 +64,6 @@ func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := playerRow.Scan(&player.Player_uid, &player.FirstName, &player.LastName, &player.Email, &player.Status, &player.Address, &player.Birth_dt, &player.Comments, &player.BloodType, &player.Afiliation, &player.Sex, &player.Curp, &player.Enfermedad, &player.Phone_number, &player.Emergency_number, &player.Insurance, &player.Insurance_name)
 	if err != nil {
-		fmt.Println(playerSql, vars["id"])
 		respuesta := map[string]interface{}{
 			"isSuccess": false,
 			"estado":    "Error",
