@@ -15,8 +15,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent) // 204 is more appropriate for preflight
 			return
 		}
 
@@ -30,6 +30,10 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(corsMiddleware)
 
+	r.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	r.HandleFunc(baseUrl+"/loginSession", routes.LoginSession)
 	r.HandleFunc(baseUrl+"/passwordRestoration", routes.RestorePassword)
 
@@ -38,6 +42,7 @@ func main() {
 	//USERS - PLAYERS
 	r.HandleFunc(baseUrl+"/players", routes.GetPlayersHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/players/newPlayer", routes.PostPlayerHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/players/editPlayer/{id}", routes.EditPlayerHandler).Methods("PUT")
 	r.HandleFunc(baseUrl+"/players", routes.DeletePlayerHandler).Methods("DELETE")
 	r.HandleFunc(baseUrl+"/players/{id}", routes.GetPlayerByIdHandler).Methods("GET")
 

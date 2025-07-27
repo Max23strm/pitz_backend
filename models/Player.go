@@ -18,7 +18,7 @@ type PlayerDetails struct {
 	FirstName        string    `json:"firstName"`
 	LastName         string    `json:"last_name"`
 	Email            string    `json:"email"`
-	Status           int16     `json:"status"`
+	Status           string    `json:"status"`
 	Birth_dt         time.Time `json:"birth_dt"`
 	Positions        []*int8   `json:"positions"`
 	Address          *string   `json:"address"`
@@ -55,6 +55,25 @@ type PostPlayerDetails struct {
 	Emergency_number *string   `json:"emergency_number,omitempty"`
 	Insurance        bool      `json:"insurance"`
 	Insurance_name   *string   `json:"insurance_name,omitempty"`
+}
+type PutPlayerDetails struct {
+	FirstName        *string    `json:"firstName,omitempty"`
+	LastName         *string    `json:"last_name,omitempty"`
+	Email            *string    `json:"email,omitempty"`
+	Status           *int16     `json:"status,omitempty"`
+	Birth_dt         *time.Time `json:"birth_dt,omitempty"`
+	Address          *string    `json:"address,omitempty"`
+	Sex              *string    `json:"sex,omitempty"`
+	BloodType        *string    `json:"blood_type,omitempty"`
+	Comments         *string    `json:"comments,omitempty"`
+	Credential       *string    `json:"credential,omitempty"`
+	Afiliation       *string    `json:"afiliation,omitempty"`
+	Curp             *string    `json:"curp,omitempty"`
+	Enfermedad       *string    `json:"enfermedad,omitempty"`
+	Phone_number     *string    `json:"phone_number,omitempty"`
+	Emergency_number *string    `json:"emergency_number,omitempty"`
+	Insurance        *bool      `json:"insurance,omitempty"`
+	Insurance_name   *string    `json:"insurance_name,omitempty"`
 }
 type PlayerDetailsWithAsistance struct {
 	GeneralInfo Player     `json:"player_data"`
