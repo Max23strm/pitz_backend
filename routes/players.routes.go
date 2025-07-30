@@ -14,6 +14,10 @@ import (
 )
 
 func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+
 	db.DBconnection()
 	playersSql := "SELECT players.player_uid, first_name, last_name, status, email FROM players"
 	players := models.Players{}
@@ -49,8 +53,14 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 		players = append(players, dato)
 	}
 	defer db.CerrarConexion()
+	respuesta := map[string]interface{}{
+		"isSuccess": true,
+		"estado":    "OK",
+		"data":      players,
+	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(players)
+
+	json.NewEncoder(w).Encode(respuesta)
 }
 
 func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {

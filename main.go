@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/Max23strm/pitz-backend/middleware"
 	"github.com/Max23strm/pitz-backend/routes"
 	"github.com/gorilla/mux"
 )
@@ -29,12 +30,14 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Use(corsMiddleware)
+	api := r.PathPrefix(baseUrl).Subrouter()
+	api.Use(middleware.AuthMiddleware)
 
 	r.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	r.HandleFunc(baseUrl+"/loginSession", routes.LoginSession)
+	r.HandleFunc(baseUrl+"/loginSession", routes.LoginSession).Methods("POST")
 	r.HandleFunc(baseUrl+"/passwordRestoration", routes.RestorePassword)
 
 	r.HandleFunc(baseUrl+"/home", routes.HomeHanlder)
@@ -65,7 +68,9 @@ func main() {
 	r.HandleFunc(baseUrl+"/paymentsTypes", routes.GetPaymentTypesHandler).Methods("GET")
 	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
 	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
-	// r.HandleFunc("/users/{id}", routes.GetUserHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/users/basics/{id}", routes.GetBasicUserHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/users/{id}", routes.GetUserHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/updateUserPassword/{id}", routes.UpdateUserHandler).Methods("PUT")
 
 	http.ListenAndServe(":3050", r)
 }
