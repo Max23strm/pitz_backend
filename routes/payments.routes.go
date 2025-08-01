@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 func GetMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +36,7 @@ func GetMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	startOfMonthFormated := startOfMonth.Format("2006-01-02 15:04:05")
 	endOfMonthFormated := endOfMonth.Format("2006-01-02 15:04:05")
 
-	paymentSQL := "SELECT payments.payment_uid, CONCAT(payer.first_name, ' ', payer.last_name) AS player_name, CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.date, payment_type.payment_name FROM `payments` INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN players AS registrar ON payments.registered_by_uid = registrar.player_uid INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.date BETWEEN ? AND ? "
+	paymentSQL := "SELECT payments.payment_uid, CONCAT(payer.first_name, ' ', payer.last_name) AS player_name, CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.date, payment_type.payment_name FROM `payments` INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid 	 INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ?  ORDER by payments.date DESC"
 	payments := models.Payments{}
 
 	datos, err := db.DB.Query(paymentSQL, startOfMonthFormated, endOfMonthFormated)
@@ -94,9 +96,8 @@ func PostMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	db.DBconnection()
 
 	new_uuid := uuid.New()
-	paymentSql := "INSERT INTO `payments` (`payment_uid`, `player_uid`, `payment_reference`, `amount`, `comment`, `date`, `payment_type_uid`, `created_at_dttm`, `updated_at_dttm`, `registered_by_uid`) VALUES (?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp(), '75328fb3-2542-11f0-b676-0045e284d2aa');"
-
-	_, err := db.DB.Exec(paymentSql, new_uuid.String(), payment.Player_uid, payment.Payment_reference, payment.Amount, payment.Comment, payment.Date, payment.Payment_type_uid)
+	paymentSql := "INSERT INTO `payments` (`payment_uid`, `player_uid`, `payment_reference`, `amount`, `comment`, `date`, `payment_type_uid`, `created_at_dttm`, `updated_at_dttm`, `registered_by_uid`) VALUES (?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp(), ?);"
+	_, err := db.DB.Exec(paymentSql, new_uuid.String(), payment.Player_uid, payment.Payment_reference, payment.Amount, payment.Comment, payment.Date, payment.Payment_type_uid, payment.User_uid)
 
 	if err != nil {
 		respuesta := map[string]interface{}{
@@ -144,4 +145,104 @@ func GetPaymentTypesHandler(w http.ResponseWriter, r *http.Request) {
 	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(payment_type)
+}
+
+func GetPaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+	paymentSql := "SELECT payments.payment_uid, payments.payment_reference, payments.amount, payments.comment, payments.date, CONCAT(players.first_name, ' ', players.last_name) as player_name, payments.player_uid, payment_type.payment_name, CONCAT(creator.first_name, ' ', creator.last_name) as registered_by FROM `payments` INNER JOIN players on players.player_uid = payments.player_uid INNER JOIN users as creator on creator.user_uid = payments.registered_by_uid INNER JOIN payment_type on payment_type.payment_type_uid = payments.payment_type_uid WHERE payment_uid = ? AND payments.delete_flag = 0"
+	db.DBconnection()
+	vars := mux.Vars(r)
+	paymentRow := db.DB.QueryRow(paymentSql, vars["id"])
+	payment := models.PaymentById{}
+
+	err := paymentRow.Scan(&payment.Payment_uid, &payment.Player_reference, &payment.Amount, &payment.Comment, &payment.Date, &payment.Player_name, &payment.Player_uid, &payment.Payment_name, &payment.Creator_name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	respuesta := map[string]interface{}{
+		"isSuccess": true,
+		"estado":    "Ok",
+		"data":      payment,
+	}
+
+	defer db.CerrarConexion()
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(respuesta)
+}
+
+func DeletePaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+	paymentSql := "UPDATE payments SET delete_flag = 1 WHERE payment_uid = ? "
+	db.DBconnection()
+	vars := mux.Vars(r)
+
+	if vars["id"] == "undefined" || len(vars["id"]) == 0 {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Ok",
+			"mensaje":   "EL id es necesario",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+
+	paymentRow, err := db.DB.Exec(paymentSql, vars["id"])
+	rowsAffected, err := paymentRow.RowsAffected()
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	if rowsAffected == 0 {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "No encontrado",
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	respuesta := map[string]interface{}{
+		"isSuccess":   true,
+		"estado":      "Ok",
+		"payment_uid": vars["id"],
+	}
+
+	defer db.CerrarConexion()
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(respuesta)
 }

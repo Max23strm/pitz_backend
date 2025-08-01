@@ -12,7 +12,7 @@ import (
 
 func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	playersSql := "SELECT COUNT(*) AS active_players FROM players WHERE players.status = 1;"
-	incomeSql := "SELECT  COALESCE(SUM(payments.amount), 0) AS monthly_income FROM payments WHERE payments.date BETWEEN ? AND ?;"
+	incomeSql := "SELECT  COALESCE(SUM(payments.amount), 0) AS monthly_income FROM payments WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ?;"
 	eventSql := "SELECT event_uid, event_name, date, event_types.type_name FROM events INNER JOIN event_types  ON event_types.event_type_uid = events.event_type  WHERE events.date > ? ORDER BY events.date ASC LIMIT 1"
 	// Get the date from the query param
 	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"

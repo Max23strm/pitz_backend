@@ -4,6 +4,14 @@ type PasswordUser struct {
 	New_password string `json:"new_password"`
 }
 
+type AllUsers struct {
+	User_uid   string `json:"user_uid"`
+	Username   string `json:"username"`
+	First_name string `json:"first_name"`
+	Last_name  string `json:"last_name"`
+}
+type AllUserArr []AllUsers
+
 type BasicUser struct {
 	User_uid string `json:"user_uid"`
 	Email    string `json:"email"`

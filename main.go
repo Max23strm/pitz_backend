@@ -66,8 +66,15 @@ func main() {
 	r.HandleFunc(baseUrl+"/payments", routes.GetMonthPaymentsHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/payments/new-payment", routes.PostMonthPaymentsHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/paymentsTypes", routes.GetPaymentTypesHandler).Methods("GET")
-	// r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
-	// r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
+	r.HandleFunc(baseUrl+"/payments/paymentById/{id}", routes.GetPaymentByIdHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/payments/deletePayment/{id}", routes.DeletePaymentByIdHandler).Methods("DELETE")
+
+	//Expenses
+	r.HandleFunc(baseUrl+"/expenses", routes.GetMonthExpensesHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/expenses/new-expense", routes.PostNewExpenseHandler).Methods("POST")
+
+	//Users
+	r.HandleFunc(baseUrl+"/users/", routes.GetUsersHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/users/basics/{id}", routes.GetBasicUserHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/users/{id}", routes.GetUserHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/updateUserPassword/{id}", routes.UpdateUserHandler).Methods("PUT")

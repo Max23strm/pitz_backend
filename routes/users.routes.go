@@ -11,6 +11,57 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+	userSql := "SELECT user_uid, username, first_name, last_name from users"
+	db.DBconnection()
+
+	db.DBconnection()
+	allUsers := models.AllUserArr{}
+	usersData, err := db.DB.Query(userSql)
+	if err != nil {
+		// Other error (e.g., database or scan error)
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo usuario: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+	for usersData.Next() {
+		currentUser := models.AllUsers{}
+		err := usersData.Scan(&currentUser.User_uid, &currentUser.Username, &currentUser.First_name, &currentUser.Last_name)
+		if err != nil {
+			// Other error (e.g., database or scan error)
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "Error obteniendo usuario: " + err.Error(),
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+
+		allUsers = append(allUsers, currentUser)
+	}
+
+	defer db.CerrarConexion()
+
+	respuesta := map[string]interface{}{
+		"isSuccess": true,
+		"estado":    "Error",
+		"data":      allUsers,
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(respuesta)
+
+}
+
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
