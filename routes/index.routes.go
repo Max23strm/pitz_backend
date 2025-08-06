@@ -37,7 +37,6 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	endOfMonthFormated := endOfMonth.Format("2006-01-02 15:04:05")
 	currentDayFormated := currentDate.Format("2006-01-02 15:04:05")
 
-	db.DBconnection()
 	finalResponse := models.FinalResponse{}
 
 	incomeRow := db.DB.QueryRow(incomeSql, startOfMonthFormated, endOfMonthFormated)
@@ -102,7 +101,6 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 		"estado":    "OK",
 		"data":      finalResponse,
 	}
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 

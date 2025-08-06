@@ -14,7 +14,6 @@ import (
 )
 
 func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
-	db.DBconnection()
 	eventsSql := "SELECT event_uid, event_type, date, event_name, event_types.type_name, events_state.event_state FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid; "
 	events := models.Events{}
 
@@ -37,14 +36,13 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		events = append(events, dato)
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(events)
 }
 
 func GetEventByIdHandler(w http.ResponseWriter, r *http.Request) {
 	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state, address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = ?"
-	db.DBconnection()
 	vars := mux.Vars(r)
 
 	eventData := db.DB.QueryRow(eventsSql, vars["id"])
@@ -53,13 +51,11 @@ func GetEventByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	eventData.Scan(&currentEvent.Event_uid, &currentEvent.Event_type_uid, &currentEvent.Date, &currentEvent.Type_name, &currentEvent.Event_name, &currentEvent.Event_state, &currentEvent.Address, &currentEvent.Coordinates)
 
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(currentEvent)
 }
 
 func GetEventsTypesHandler(w http.ResponseWriter, r *http.Request) {
-	db.DBconnection()
 	eventsSql := "SELECT * FROM event_types"
 	events := models.EventsTypes{}
 
@@ -82,7 +78,7 @@ func GetEventsTypesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		events = append(events, dato)
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(events)
 }
@@ -117,8 +113,6 @@ func NewEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.DBconnection()
-
 	new_uuid := uuid.New()
 	eventsSql := "INSERT INTO `events`( event_uid, `event_type`, `date`, `event_name`, `event_state_uid`, `address`, `coordinates`) VALUES (?, ?, ?, ?, ?, ?, ?)"
 
@@ -137,7 +131,6 @@ func NewEventHandler(w http.ResponseWriter, r *http.Request) {
 	uuidResponse := map[string]string{
 		"event_uuid": new_uuid.String(),
 	}
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(uuidResponse)
 }
@@ -199,8 +192,6 @@ func EditEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.DBconnection()
-
 	values = append(values, event_uid)
 
 	// Final query
@@ -234,7 +225,7 @@ func EditEventHandler(w http.ResponseWriter, r *http.Request) {
 		"event_uuid": event_uid,
 		"estado":     "Editado con éxito",
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(uuidResponse)
 }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
+	"github.com/Max23strm/pitz-backend/db"
 	"github.com/Max23strm/pitz-backend/middleware"
 	"github.com/Max23strm/pitz-backend/routes"
 	"github.com/gorilla/mux"
@@ -27,6 +29,12 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 // docker run --name some-postgres -e ¨PSTGRES_USER=max -e POSTGRES_PASSWORD=secretpassword -d postgres
 func main() {
+
+	if err := db.DBconnection(); err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+
+	defer db.CerrarConexion() // ✅ Close on shutdown
 
 	r := mux.NewRouter()
 	r.Use(corsMiddleware)

@@ -13,7 +13,6 @@ import (
 
 func getUserFromDB(username string) (*models.UserFromDb, error) {
 	var user models.UserFromDb
-	db.DBconnection()
 
 	query := `SELECT user_uid, username, hashed_password FROM users WHERE username = ? Or email= ? LIMIT 1;`
 	row := db.DB.QueryRow(query, username, username)
@@ -23,7 +22,6 @@ func getUserFromDB(username string) (*models.UserFromDb, error) {
 		return nil, err // could be sql.ErrNoRows
 	}
 
-	defer db.CerrarConexion()
 	return &user, nil
 }
 

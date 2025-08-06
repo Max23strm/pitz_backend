@@ -49,8 +49,6 @@ func PostNewExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.DBconnection()
-
 	new_uuid := uuid.New()
 	expenseSql := "INSERT INTO expenses(expense_uid, assigned_uid, reason, amount, created_at_dttm, updated_at_dttm, registered_by_uid, date) VALUES (?, ?, ?, ?, current_timestamp(), current_timestamp(), ?, ?);"
 	_, err := db.DB.Exec(expenseSql, new_uuid.String(), expense.Assigned_uid, expense.Reason, expense.Amount, expense.Registered_by, expense.Date)
@@ -71,7 +69,7 @@ func PostNewExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		"estado":      "Creado",
 		"payment_uid": new_uuid.String(),
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(uuidResponse)
 }
@@ -80,11 +78,8 @@ func GetMonthExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	db.DBconnection()
-	// Get the date from the query param
-	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"
+	dateStr := r.URL.Query().Get("date")
 
-	// Parse the date string to a time.Time object
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		http.Error(w, "Invalid date format. Use YYYY-MM-DD", http.StatusBadRequest)
@@ -124,7 +119,7 @@ func GetMonthExpensesHandler(w http.ResponseWriter, r *http.Request) {
 
 		expenses = append(expenses, dato)
 	}
-	defer db.CerrarConexion()
+
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
 		"estado":    "Ok",
@@ -138,7 +133,6 @@ func GetMonthExpensesByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	expenseSql := "SELECT expenses.assigned_uid as assigned_to_uid, CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to, expenses.reason, expenses.amount, expenses.registered_by_uid, expenses.date FROM expenses INNER JOIN users on users.user_uid = expenses.registered_by_uid INNER JOIN users as assigned on assigned.user_uid = expenses.assigned_uid WHERE expense_uid = ?"
-	db.DBconnection()
 	vars := mux.Vars(r)
 
 	expenseRow := db.DB.QueryRow(expenseSql, vars["id"]) // e.g., "2025-06-01"
@@ -167,7 +161,7 @@ func GetMonthExpensesByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer db.CerrarConexion()
+
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
 		"estado":    "Ok",

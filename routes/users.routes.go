@@ -16,9 +16,7 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userSql := "SELECT user_uid, username, first_name, last_name from users"
-	db.DBconnection()
 
-	db.DBconnection()
 	allUsers := models.AllUserArr{}
 	usersData, err := db.DB.Query(userSql)
 	if err != nil {
@@ -50,8 +48,6 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		allUsers = append(allUsers, currentUser)
 	}
 
-	defer db.CerrarConexion()
-
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
 		"estado":    "Error",
@@ -67,10 +63,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userSql := "SELECT user_uid, email, username, first_name, last_name from users WHERE user_uid = ?"
-	db.DBconnection()
 	vars := mux.Vars(r)
-
-	db.DBconnection()
 
 	userBasicData := db.DB.QueryRow(userSql, vars["id"])
 	currentUser := models.FullUser{}
@@ -100,8 +93,6 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer db.CerrarConexion()
-
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
 		"estado":    "Error",
@@ -117,7 +108,6 @@ func GetBasicUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userSql := "SELECT user_uid, email, username from users WHERE user_uid = ?"
-	db.DBconnection()
 	vars := mux.Vars(r)
 
 	userBasicData := db.DB.QueryRow(userSql, vars["id"])
@@ -152,7 +142,7 @@ func GetBasicUserHandler(w http.ResponseWriter, r *http.Request) {
 		"estado":    "OK",
 		"data":      currentUser,
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 
@@ -167,7 +157,6 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	var NewPass models.PasswordUser
 	player_uid := vars["id"]
-	db.DBconnection()
 
 	if err := json.NewDecoder(r.Body).Decode(&NewPass); err != nil {
 		respuesta := map[string]string{
@@ -208,7 +197,6 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		"player_uid": player_uid,
 	}
 
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 }

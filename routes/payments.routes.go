@@ -15,12 +15,8 @@ import (
 )
 
 func GetMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
-	db.DBconnection()
-
-	// Get the date from the query param
 	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"
 
-	// Parse the date string to a time.Time object
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		http.Error(w, "Invalid date format. Use YYYY-MM-DD", http.StatusBadRequest)
@@ -55,7 +51,7 @@ func GetMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 
 		payments = append(payments, dato)
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(payments)
 }
@@ -93,8 +89,6 @@ func PostMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db.DBconnection()
-
 	new_uuid := uuid.New()
 	paymentSql := "INSERT INTO `payments` (`payment_uid`, `player_uid`, `payment_reference`, `amount`, `comment`, `date`, `payment_type_uid`, `created_at_dttm`, `updated_at_dttm`, `registered_by_uid`) VALUES (?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp(), ?);"
 	_, err := db.DB.Exec(paymentSql, new_uuid.String(), payment.Player_uid, payment.Payment_reference, payment.Amount, payment.Comment, payment.Date, payment.Payment_type_uid, payment.User_uid)
@@ -115,13 +109,12 @@ func PostMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 		"estado":      "Creado",
 		"payment_uid": new_uuid.String(),
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(uuidResponse)
 }
 
 func GetPaymentTypesHandler(w http.ResponseWriter, r *http.Request) {
-	db.DBconnection()
 
 	paymentSQL := "SELECT * FROM payment_type"
 	payment_type := models.PaymentTypes{}
@@ -142,7 +135,7 @@ func GetPaymentTypesHandler(w http.ResponseWriter, r *http.Request) {
 
 		payment_type = append(payment_type, dato)
 	}
-	defer db.CerrarConexion()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(payment_type)
 }
@@ -152,7 +145,7 @@ func GetPaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	paymentSql := "SELECT payments.payment_uid, payments.payment_reference, payments.amount, payments.comment, payments.date, CONCAT(players.first_name, ' ', players.last_name) as player_name, payments.player_uid, payment_type.payment_name, CONCAT(creator.first_name, ' ', creator.last_name) as registered_by FROM `payments` INNER JOIN players on players.player_uid = payments.player_uid INNER JOIN users as creator on creator.user_uid = payments.registered_by_uid INNER JOIN payment_type on payment_type.payment_type_uid = payments.payment_type_uid WHERE payment_uid = ? AND payments.delete_flag = 0"
-	db.DBconnection()
+
 	vars := mux.Vars(r)
 	paymentRow := db.DB.QueryRow(paymentSql, vars["id"])
 	payment := models.PaymentById{}
@@ -186,7 +179,6 @@ func GetPaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 		"data":      payment,
 	}
 
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 }
@@ -196,7 +188,7 @@ func DeletePaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	paymentSql := "UPDATE payments SET delete_flag = 1 WHERE payment_uid = ? "
-	db.DBconnection()
+
 	vars := mux.Vars(r)
 
 	if vars["id"] == "undefined" || len(vars["id"]) == 0 {
@@ -242,7 +234,6 @@ func DeletePaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 		"payment_uid": vars["id"],
 	}
 
-	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 }
