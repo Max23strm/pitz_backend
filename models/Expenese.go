@@ -9,6 +9,14 @@ type PostExpenses struct {
 	Registered_by string    `json:"registered_by"`
 	Assigned_uid  string    `json:"assigned_uid"`
 }
+type GetExpenseId struct {
+	Assigned_to_uid   string    `json:"assigned_to_uid"`
+	Assigned_to       string    `json:"assigned_to"`
+	Reason            string    `json:"reason"`
+	Amount            string    `json:"amount"`
+	Registered_by_uid string    `json:"registered_by_uid"`
+	Date              time.Time `json:"date"`
+}
 
 type MonthlyExpenses struct {
 	Assigned_to string    `json:"assigned_to"`

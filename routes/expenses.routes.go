@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 func PostNewExpenseHandler(w http.ResponseWriter, r *http.Request) {
@@ -127,6 +129,49 @@ func GetMonthExpensesHandler(w http.ResponseWriter, r *http.Request) {
 		"isSuccess": true,
 		"estado":    "Ok",
 		"data":      expenses,
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(respuesta)
+}
+func GetMonthExpensesByIdHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+	expenseSql := "SELECT expenses.assigned_uid as assigned_to_uid, CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to, expenses.reason, expenses.amount, expenses.registered_by_uid, expenses.date FROM expenses INNER JOIN users on users.user_uid = expenses.registered_by_uid INNER JOIN users as assigned on assigned.user_uid = expenses.assigned_uid WHERE expense_uid = ?"
+	db.DBconnection()
+	vars := mux.Vars(r)
+
+	expenseRow := db.DB.QueryRow(expenseSql, vars["id"]) // e.g., "2025-06-01"
+
+	expense := models.GetExpenseId{}
+
+	err := expenseRow.Scan(&expense.Assigned_to_uid, &expense.Assigned_to, &expense.Reason, &expense.Amount, &expense.Registered_by_uid, &expense.Date)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	defer db.CerrarConexion()
+	respuesta := map[string]interface{}{
+		"isSuccess": true,
+		"estado":    "Ok",
+		"data":      expense,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)

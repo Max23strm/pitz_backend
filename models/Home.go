@@ -10,7 +10,8 @@ type NextEvent struct {
 }
 
 type FinalResponse struct {
-	Monthly_income float64    `json:"monthly_income"`
-	Players_amount float64    `json:"players_amount"`
-	UpcomingEvent  *NextEvent `json:"upcoming_event"`
+	Monthly_income  float64    `json:"monthly_income"`
+	Monthly_expense float64    `json:"monthly_expense"`
+	Players_amount  float64    `json:"players_amount"`
+	UpcomingEvent   *NextEvent `json:"upcoming_event"`
 }
