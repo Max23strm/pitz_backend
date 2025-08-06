@@ -18,7 +18,7 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playersSql := "SELECT players.player_uid, first_name, last_name, status, email FROM players"
+	playersSql := "SELECT players.player_uid, first_name, last_name, status, email FROM players ORDER BY players.first_name ASC"
 	players := models.Players{}
 
 	datos, err := db.DB.Query(playersSql)
