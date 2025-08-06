@@ -97,12 +97,12 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	defer db.CerrarConexion()
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
 		"estado":    "OK",
 		"data":      finalResponse,
 	}
+	defer db.CerrarConexion()
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 
