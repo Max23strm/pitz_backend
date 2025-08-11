@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/Max23strm/pitz-backend/calendar"
 	"github.com/Max23strm/pitz-backend/db"
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
@@ -42,6 +44,7 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetEventByIdHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Que hace aca?")
 	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state, address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = ?"
 	vars := mux.Vars(r)
 
@@ -228,4 +231,78 @@ func EditEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(uuidResponse)
+}
+
+func GetEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
+	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"
+
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, "Invalid date format. Use YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	// Get the first day of the month
+	startOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	// Get the last day of the month by going to the first day of the next month and subtracting a day
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+	var googleEvents []map[string]interface{}
+
+	startOfMonthFormated := startOfMonth.Format("2006-01-02T15:04:05Z")
+	endOfMonthFormated := endOfMonth.Format("2006-01-02T15:04:05Z")
+
+	err, fetchedEvents := calendar.GetEventsByMonth(startOfMonthFormated, endOfMonthFormated)
+	if err != nil {
+		eventsResponse := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   err.Error(),
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(eventsResponse)
+	}
+
+	if len(fetchedEvents) == 0 {
+		eventsResponse := map[string]interface{}{
+			"isSuccess": true,
+			"events":    googleEvents,
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(eventsResponse)
+		return
+	}
+	for _, item := range fetchedEvents {
+		start := item.Start.DateTime
+		end := item.End.DateTime
+		if start == "" {
+			start = item.Start.Date
+		}
+		if end == "" {
+			end = item.End.Date
+		}
+
+		dato := map[string]interface{}{
+			"google_id":  item.Id,
+			"kind":       item.Kind,
+			"summary":    item.Summary,
+			"location":   item.Location,
+			"event_type": item.EventType,
+			"start":      start,
+			"end":        end,
+			"link":       item.HtmlLink,
+		}
+
+		googleEvents = append(googleEvents, dato)
+	}
+
+	eventsResponse := map[string]interface{}{
+		"isSuccess": true,
+		"events":    googleEvents,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(eventsResponse)
 }

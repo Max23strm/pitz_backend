@@ -7,7 +7,12 @@
 .env.local
 
 pitz-backend.exe
-./tmp
 
-./tmp/main.exe
-./tmp/build-errors.log
+tmp/
+tmp/main.exe
+tmp/build-errors.log
+
+secrets/
+.env
+tmp/main.exe
+tmp/build-errors.log

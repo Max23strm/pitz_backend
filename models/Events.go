@@ -59,3 +59,14 @@ type Asistances []Asistance
 
 type Events []Event
 type EventsTypes []EventType
+
+type GoogleCalendarEvent struct {
+	Id        string `json:"google_id"`
+	Kind      string `json:"kind"`
+	Location  string `json:"location"`
+	EventType string `json:"event_type"`
+	Start     string `json:"start"`
+	End       string `json:"end"`
+}
+
+type GoogleCalendarEvents []GoogleCalendarEvent
