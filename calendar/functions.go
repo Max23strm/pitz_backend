@@ -3,6 +3,7 @@ package calendar
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"golang.org/x/oauth2/google"
@@ -36,6 +37,7 @@ func ConectToCalendar() (*calendar.Service, error) {
 
 	if enviroment == "PROD" {
 		jsonCreds := os.Getenv("GOOGLE_CREDENTIALS_JSON")
+		fmt.Println("jsonCreds ->", jsonCreds)
 		if jsonCreds == "" {
 			return nil, errors.New("Empty env")
 		}
