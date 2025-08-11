@@ -3,7 +3,6 @@ package calendar
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 
 	"golang.org/x/oauth2/google"
@@ -36,7 +35,6 @@ func ConectToCalendar() (*calendar.Service, error) {
 	}
 
 	if enviroment == "PROD" {
-		fmt.Println("ACA")
 		jsonCreds := os.Getenv("GOOGLE_CREDENTIALS_JSON")
 		if jsonCreds == "" {
 			return nil, errors.New("Empty env")
@@ -60,7 +58,6 @@ func ConectToCalendar() (*calendar.Service, error) {
 func GetNextEvent(currentDate, endMonth string) (error, *calendar.Event) {
 
 	srv, err := ConectToCalendar()
-
 	if err != nil {
 		return err, nil
 	}
@@ -71,8 +68,6 @@ func GetNextEvent(currentDate, endMonth string) (error, *calendar.Event) {
 		TimeMax(endMonth).
 		SingleEvents(true).OrderBy("startTime").Do()
 	if err != nil {
-		fmt.Println("Es aca")
-
 		return err, nil
 	}
 

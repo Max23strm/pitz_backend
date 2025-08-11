@@ -43,6 +43,26 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	playersRow := db.DB.QueryRow(playersSql)
 
 	err, ThisEvent := calendar.GetNextEvent(currentDate.Format(time.RFC3339), endOfMonth.Format(time.RFC3339))
+	if err == nil {
+		start := ThisEvent.Start.DateTime
+		end := ThisEvent.End.DateTime
+		if start == "" {
+			start = ThisEvent.Start.Date
+		}
+		if end == "" {
+			end = ThisEvent.End.Date
+		}
+
+		finalResponse.UpcomingEvent.Summary = ThisEvent.Summary
+		finalResponse.UpcomingEvent.Created = ThisEvent.Created
+		finalResponse.UpcomingEvent.EventType = ThisEvent.EventType
+		finalResponse.UpcomingEvent.HtmlLink = ThisEvent.HtmlLink
+		finalResponse.UpcomingEvent.Kind = ThisEvent.Kind
+		finalResponse.UpcomingEvent.Location = ThisEvent.Location
+		finalResponse.UpcomingEvent.Start = ThisEvent.Start
+		finalResponse.UpcomingEvent.End = ThisEvent.End
+		finalResponse.UpcomingEvent.Status = ThisEvent.Status
+	}
 
 	err = incomeRow.Scan(&finalResponse.Monthly_income)
 	if err != nil {
@@ -80,24 +100,6 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	start := ThisEvent.Start.DateTime
-	end := ThisEvent.End.DateTime
-	if start == "" {
-		start = ThisEvent.Start.Date
-	}
-	if end == "" {
-		end = ThisEvent.End.Date
-	}
-
-	finalResponse.UpcomingEvent.Summary = ThisEvent.Summary
-	finalResponse.UpcomingEvent.Created = ThisEvent.Created
-	finalResponse.UpcomingEvent.EventType = ThisEvent.EventType
-	finalResponse.UpcomingEvent.HtmlLink = ThisEvent.HtmlLink
-	finalResponse.UpcomingEvent.Kind = ThisEvent.Kind
-	finalResponse.UpcomingEvent.Location = ThisEvent.Location
-	finalResponse.UpcomingEvent.Start = ThisEvent.Start
-	finalResponse.UpcomingEvent.End = ThisEvent.End
-	finalResponse.UpcomingEvent.Status = ThisEvent.Status
 
 	respuesta := map[string]interface{}{
 		"isSuccess": true,
