@@ -82,6 +82,7 @@ func main() {
 	r.HandleFunc(baseUrl+"/expenses", routes.GetMonthExpensesHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/expenses/new-expense", routes.PostNewExpenseHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/expenses/{id}", routes.GetMonthExpensesByIdHandler).Methods("Get")
+	r.HandleFunc(baseUrl+"/payments/deleteExpense/{id}", routes.DeleteExpenseByIdHandler).Methods("DELETE")
 
 	//Users
 	r.HandleFunc(baseUrl+"/users/", routes.GetUsersHandler).Methods("GET")

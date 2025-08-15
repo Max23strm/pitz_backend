@@ -170,3 +170,68 @@ func GetMonthExpensesByIdHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
 }
+func DeleteExpenseByIdHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+	expenseSql := "UPDATE expenses SET delete_flag = 1 WHERE expense_uid = ? "
+
+	vars := mux.Vars(r)
+
+	if vars["id"] == "undefined" || len(vars["id"]) == 0 {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Ok",
+			"mensaje":   "EL id es necesario",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+
+	expenseRow, err := db.DB.Exec(expenseSql, vars["id"])
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	rowsAffected, err := expenseRow.RowsAffected()
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	if rowsAffected == 0 {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "No encontrado",
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	respuesta := map[string]interface{}{
+		"isSuccess":   true,
+		"estado":      "Ok",
+		"payment_uid": vars["id"],
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(respuesta)
+}

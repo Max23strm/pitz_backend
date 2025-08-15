@@ -13,6 +13,5 @@ tmp/main.exe
 tmp/build-errors.log
 
 secrets/
-.env
 tmp/main.exe
 tmp/build-errors.log
