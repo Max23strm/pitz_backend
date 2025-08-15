@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -62,6 +63,9 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 		finalResponse.UpcomingEvent.Start = ThisEvent.Start
 		finalResponse.UpcomingEvent.End = ThisEvent.End
 		finalResponse.UpcomingEvent.Status = ThisEvent.Status
+	} else {
+		fmt.Println("---- Error de calendario ----")
+		fmt.Println(err)
 	}
 
 	err = incomeRow.Scan(&finalResponse.Monthly_income)
