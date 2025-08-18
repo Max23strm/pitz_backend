@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 func GenerateJWT(userID string) (string, time.Time, error) {
-	errorVariables := godotenv.Load()
-	if errorVariables != nil {
-		panic(errorVariables)
-	}
+	// errorVariables := godotenv.Load()
+	// if errorVariables != nil {
+	// 	panic(errorVariables)
+	// }
 	var jwtKey = []byte(os.Getenv("HASH"))
 
 	expirationTime := time.Now().Add(48 * time.Hour)

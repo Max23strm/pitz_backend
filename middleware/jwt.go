@@ -7,15 +7,14 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 func ValidateJWT(tokenString string) (*jwt.RegisteredClaims, bool) {
 
-	errorVariables := godotenv.Load()
-	if errorVariables != nil {
-		return nil, false
-	}
+	// errorVariables := godotenv.Load()
+	// if errorVariables != nil {
+	// 	return nil, false
+	// }
 	var jwtKey = []byte(os.Getenv("HASH"))
 
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {

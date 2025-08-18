@@ -12,9 +12,14 @@ import (
 var DB *sql.DB
 
 func DBconnection() error {
-	errorVariables := godotenv.Load()
-	if errorVariables != nil {
-		panic(errorVariables)
+
+	if os.Getenv("RAILWAY_ENVIRONMENT") == "" {
+		fmt.Println("Is not railway")
+		errorVariables := godotenv.Load()
+		if errorVariables != nil {
+			fmt.Println(errorVariables)
+			panic(errorVariables)
+		}
 	}
 
 	conection, err := sql.Open("mysql", os.Getenv("DB_USER")+":"+os.Getenv("DB_PASSWORD")+"@tcp("+os.Getenv("DB_SERVER")+":"+os.Getenv("DB_PORT")+")/"+os.Getenv("DB_NAME")+"?parseTime=true")

@@ -306,3 +306,37 @@ func GetEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(eventsResponse)
 }
+
+func GetEventsReport(w http.ResponseWriter, r *http.Request) {
+
+	var event models.EventFile
+
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		respuesta := map[string]string{
+			"estado":  "Error",
+			"mensaje": "Error al crear",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+	validationErrors := validations.EventsFileValidation(event)
+
+	if len(validationErrors) > 0 {
+
+		var errors []string
+		errors = append(errors, validationErrors...)
+
+		respuesta := map[string]interface{}{
+			"isSuccese": false,
+			"estado":    "Error",
+			"mensaje":   errors,
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+}

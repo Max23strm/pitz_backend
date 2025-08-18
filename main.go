@@ -63,6 +63,7 @@ func main() {
 	r.HandleFunc(baseUrl+"/events/newEvent", routes.NewEventHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/events/editEvent/{id}", routes.EditEventHandler).Methods("PUT")
 	r.HandleFunc(baseUrl+"/events/getEventsByMonth", routes.GetEventsByMonthHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/events/getEventsReport", routes.GetEventsReport).Methods("POST")
 
 	//EVENT TYPES
 	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
