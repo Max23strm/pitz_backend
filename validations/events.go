@@ -28,28 +28,3 @@ func EventsPostValidations(event models.EventPost) []string {
 
 	return validationErrors
 }
-
-func EventsFileValidation(event models.EventFile) []string {
-
-	var validationErrors []string
-
-	if strings.TrimSpace(event.File_type) == "" {
-		validationErrors = append(validationErrors, "El tipo de archivo es requerido.")
-	}
-	if event.File_type != "excel" && event.File_type != "pdf" {
-		validationErrors = append(validationErrors, "El tipo de archivo es incorrecto: "+event.File_type)
-	}
-
-	if event.Start_date.IsZero() {
-		validationErrors = append(validationErrors, "La fecha de incio es requerida.")
-	}
-	if event.End_date.IsZero() {
-		validationErrors = append(validationErrors, "La fecha final es requerida.")
-	}
-
-	if event.Start_date.After(event.End_date) {
-		validationErrors = append(validationErrors, "La fecha final debe ser despues de la inicial")
-	}
-
-	return validationErrors
-}

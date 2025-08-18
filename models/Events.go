@@ -70,9 +70,3 @@ type GoogleCalendarEvent struct {
 }
 
 type GoogleCalendarEvents []GoogleCalendarEvent
-
-type EventFile struct {
-	Start_date time.Time `json:"start_date"`
-	End_date   time.Time `json:"end_date"`
-	File_type  string    `json:"file_type"`
-}

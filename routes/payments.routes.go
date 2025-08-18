@@ -1,13 +1,16 @@
 package routes
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/Max23strm/pitz-backend/db"
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
 	"github.com/google/uuid"
@@ -236,4 +239,160 @@ func DeletePaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
+}
+
+func GetPaymentsReport(w http.ResponseWriter, r *http.Request) {
+
+	var paymentRequested models.PaymentFile
+
+	if err := json.NewDecoder(r.Body).Decode(&paymentRequested); err != nil {
+		respuesta := map[string]string{
+			"estado":  "Error",
+			"mensaje": "Error al crear",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+	validationErrors := validations.PaymentsFileValidation(paymentRequested)
+
+	if len(validationErrors) > 0 {
+
+		var errors []string
+		errors = append(errors, validationErrors...)
+
+		respuesta := map[string]interface{}{
+			"isSuccese": false,
+			"estado":    "Error",
+			"mensaje":   errors,
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	// startDate, err := time.Parse("2006-01-02", paymentRequested.Start_date)
+
+	paymentDataSql := "SELECT payments.date AS payment_date, payments.payment_uid, payer.first_name as player_name,payer.last_name as player_last_name,CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.comment, payment_type.payment_name FROM `payments` INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ? ORDER by payments.date ASC"
+	monthlySQL := "SELECT DATE_FORMAT(date, '%m-%Y') AS month, SUM(amount) AS total FROM payments WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ? GROUP BY month ORDER BY month;"
+
+	paymentsRows, err := db.DB.Query(paymentDataSql, paymentRequested.Start_date, paymentRequested.End_date)
+	payments := models.PaymentFileRows{}
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	for paymentsRows.Next() {
+		payment := models.PaymentFileRow{}
+		err := paymentsRows.Scan(&payment.Payment_date, &payment.Payment_uid, &payment.Player_name, &payment.Player_last_name, &payment.Registered_by_name, &payment.Player_uid, &payment.Amount, &payment.Comment, &payment.Payment_name)
+		if err != nil {
+			log.Println("Error obteniendo datos: ", err)
+			http.Error(w, "Error scanning data", http.StatusInternalServerError)
+			return
+		}
+
+		payments = append(payments, payment)
+	}
+	monthlyRows, err := db.DB.Query(monthlySQL, paymentRequested.Start_date, paymentRequested.End_date)
+	monthlyPayments := models.MonthlyFileRows{}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	for monthlyRows.Next() {
+		var monthStr string
+		var total float64
+
+		err := monthlyRows.Scan(&monthStr, &total)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Parse "08-2025" into time.Time
+		parsedTime, err := time.Parse("01-2006", monthStr)
+		if err != nil {
+			log.Fatal("Failed to parse month:", err)
+		}
+
+		monthlyPayments = append(monthlyPayments, models.MonthlyFileRow{
+			Month:  parsedTime,
+			Amount: total,
+		})
+
+	}
+	file, err := helpers.CreatePaymentExcel(payments, monthlyPayments)
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error generando archivo: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	var buf bytes.Buffer
+	if err := file.Write(&buf); err != nil {
+		http.Error(w, "Error writing Excel file", http.StatusInternalServerError)
+		return
+	}
+
+	// Set headers to prompt a download
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename=report.xlsx")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
+	w.WriteHeader(http.StatusOK)
+
+	// Write the file to the response
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error writing response: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
 }

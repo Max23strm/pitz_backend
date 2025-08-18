@@ -63,7 +63,6 @@ func main() {
 	r.HandleFunc(baseUrl+"/events/newEvent", routes.NewEventHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/events/editEvent/{id}", routes.EditEventHandler).Methods("PUT")
 	r.HandleFunc(baseUrl+"/events/getEventsByMonth", routes.GetEventsByMonthHandler).Methods("GET")
-	r.HandleFunc(baseUrl+"/events/getEventsReport", routes.GetEventsReport).Methods("POST")
 
 	//EVENT TYPES
 	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
@@ -78,6 +77,7 @@ func main() {
 	r.HandleFunc(baseUrl+"/paymentsTypes", routes.GetPaymentTypesHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/payments/paymentById/{id}", routes.GetPaymentByIdHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/payments/deletePayment/{id}", routes.DeletePaymentByIdHandler).Methods("DELETE")
+	r.HandleFunc(baseUrl+"/events/getEventsReport", routes.GetPaymentsReport).Methods("POST")
 
 	//Expenses
 	r.HandleFunc(baseUrl+"/expenses", routes.GetMonthExpensesHandler).Methods("GET")

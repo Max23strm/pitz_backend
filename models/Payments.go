@@ -46,3 +46,30 @@ type PaymentById struct {
 type PaymentUid struct {
 	Payment_uid string `json:"payment_uid"`
 }
+
+type PaymentFile struct {
+	Start_date time.Time `json:"start_date"`
+	End_date   time.Time `json:"end_date"`
+	File_type  string    `json:"file_type"`
+}
+
+type PaymentFileRow struct {
+	Payment_uid        string    `json:"payment_uid"`
+	Payment_date       time.Time `json:"payment_date"`
+	Player_name        string    `json:"player_name"`
+	Player_last_name   string    `json:"player_last_name"`
+	Registered_by_name string    `json:"registered_by_name"`
+	Player_uid         string    `json:"player_uid"`
+	Amount             float64   `json:"amount"`
+	Comment            string    `json:"comment"`
+	Payment_name       string    `json:"payment_name"`
+}
+
+type PaymentFileRows []PaymentFileRow
+
+type MonthlyFileRow struct {
+	Month  time.Time `json:"month"`
+	Amount float64   `json:"amount"`
+}
+
+type MonthlyFileRows []MonthlyFileRow
