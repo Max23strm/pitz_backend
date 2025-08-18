@@ -77,13 +77,14 @@ func main() {
 	r.HandleFunc(baseUrl+"/paymentsTypes", routes.GetPaymentTypesHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/payments/paymentById/{id}", routes.GetPaymentByIdHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/payments/deletePayment/{id}", routes.DeletePaymentByIdHandler).Methods("DELETE")
-	r.HandleFunc(baseUrl+"/events/getEventsReport", routes.GetPaymentsReport).Methods("POST")
+	r.HandleFunc(baseUrl+"/payments/getPaymentsReport", routes.GetPaymentsReport).Methods("POST")
 
 	//Expenses
 	r.HandleFunc(baseUrl+"/expenses", routes.GetMonthExpensesHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/expenses/new-expense", routes.PostNewExpenseHandler).Methods("POST")
 	r.HandleFunc(baseUrl+"/expenses/{id}", routes.GetMonthExpensesByIdHandler).Methods("Get")
-	r.HandleFunc(baseUrl+"/payments/deleteExpense/{id}", routes.DeleteExpenseByIdHandler).Methods("DELETE")
+	r.HandleFunc(baseUrl+"/expenses/deleteExpense/{id}", routes.DeleteExpenseByIdHandler).Methods("DELETE")
+	r.HandleFunc(baseUrl+"/expenses/getExpensesReport", routes.GetExpensesReport).Methods("POST")
 
 	//Users
 	r.HandleFunc(baseUrl+"/users/", routes.GetUsersHandler).Methods("GET")

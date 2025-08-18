@@ -27,3 +27,15 @@ type MonthlyExpenses struct {
 }
 
 type MonthlyExpensesGroup []MonthlyExpenses
+
+type ExpensesFileRow struct {
+	Expense_uid         string    `json:"expense_uid"`
+	Reason              string    `json:"reason"`
+	Amount              float64   `json:"amount"`
+	Date                time.Time `json:"date"`
+	Assigned_first_name string    `json:"assigned_first_name"`
+	Assigned_last_name  string    `json:"assigned_last_name"`
+	Assigned_uid        string    `json:"assigned_uid"`
+}
+
+type ExpensesFileRows []ExpensesFileRow

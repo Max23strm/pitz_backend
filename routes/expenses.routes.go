@@ -1,12 +1,16 @@
 package routes
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/Max23strm/pitz-backend/db"
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
 	"github.com/google/uuid"
@@ -234,4 +238,160 @@ func DeleteExpenseByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(respuesta)
+}
+
+func GetExpensesReport(w http.ResponseWriter, r *http.Request) {
+
+	var paymentRequested models.PaymentFile
+
+	if err := json.NewDecoder(r.Body).Decode(&paymentRequested); err != nil {
+		respuesta := map[string]string{
+			"estado":  "Error",
+			"mensaje": "Error al crear",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+		return
+	}
+	validationErrors := validations.PaymentsFileValidation(paymentRequested)
+
+	if len(validationErrors) > 0 {
+
+		var errors []string
+		errors = append(errors, validationErrors...)
+
+		respuesta := map[string]interface{}{
+			"isSuccese": false,
+			"estado":    "Error",
+			"mensaje":   errors,
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	// startDate, err := time.Parse("2006-01-02", paymentRequested.Start_date)
+
+	expenseDataSql := "SELECT expenses.expense_uid, expenses.reason, assigned.first_name as assigned_first_name,assigned.last_name as assigned_last_name,expenses.amount, expenses.date FROM expenses INNER JOIN users AS assigned ON expenses.assigned_uid = assigned.user_uid INNER JOIN users AS registrar ON expenses.registered_by_uid = registrar.user_uid WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ? ORDER by expenses.date DESC"
+	monthlySQL := "SELECT DATE_FORMAT(date, '%m-%Y') AS month, SUM(amount) AS total FROM expenses WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ? GROUP BY month ORDER BY month;"
+
+	expenseRows, err := db.DB.Query(expenseDataSql, paymentRequested.Start_date, paymentRequested.End_date)
+	expenses := models.ExpensesFileRows{}
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	for expenseRows.Next() {
+		expense := models.ExpensesFileRow{}
+		err := expenseRows.Scan(&expense.Expense_uid, &expense.Reason, &expense.Assigned_first_name, &expense.Assigned_last_name, &expense.Amount, &expense.Date)
+		if err != nil {
+			log.Println("Error obteniendo datos: ", err)
+			http.Error(w, "Error scanning data", http.StatusInternalServerError)
+			return
+		}
+
+		expenses = append(expenses, expense)
+	}
+	monthlyRows, err := db.DB.Query(monthlySQL, paymentRequested.Start_date, paymentRequested.End_date)
+	monthlyPayments := models.MonthlyFileRows{}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respuesta := map[string]interface{}{
+				"isSuccess": false,
+				"estado":    "Error",
+				"mensaje":   "No encontrado",
+			}
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(respuesta)
+			return
+		}
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error obteniendo pago: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+
+	for monthlyRows.Next() {
+		var monthStr string
+		var total float64
+
+		err := monthlyRows.Scan(&monthStr, &total)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Parse "08-2025" into time.Time
+		parsedTime, err := time.Parse("01-2006", monthStr)
+		if err != nil {
+			log.Fatal("Failed to parse month:", err)
+		}
+
+		monthlyPayments = append(monthlyPayments, models.MonthlyFileRow{
+			Month:  parsedTime,
+			Amount: total,
+		})
+
+	}
+	file, err := helpers.CreateExpensesExcel(expenses, monthlyPayments)
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error generando archivo: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
+	var buf bytes.Buffer
+	if err := file.Write(&buf); err != nil {
+		http.Error(w, "Error writing Excel file", http.StatusInternalServerError)
+		return
+	}
+
+	// Set headers to prompt a download
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename=report.xlsx")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
+	w.WriteHeader(http.StatusOK)
+
+	// Write the file to the response
+	_, err = w.Write(buf.Bytes())
+	if err != nil {
+		respuesta := map[string]interface{}{
+			"isSuccess": false,
+			"estado":    "Error",
+			"mensaje":   "Error writing response: " + err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(respuesta)
+
+		return
+	}
 }
