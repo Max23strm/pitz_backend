@@ -54,7 +54,7 @@ func PostNewExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	new_uuid := uuid.New()
-	expenseSql := "INSERT INTO expenses(expense_uid, assigned_uid, reason, amount, created_at_dttm, updated_at_dttm, registered_by_uid, date) VALUES (?, ?, ?, ?, current_timestamp(), current_timestamp(), ?, ?);"
+	expenseSql := "INSERT INTO \"expenses\"(\"expense_uid\", \"assigned_uid\", \"reason\", \"amount\", \"created_at_dttm\", \"updated_at_dttm\", \"registered_by_uid\", \"date\") VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $5, $6);"
 	_, err := db.DB.Exec(expenseSql, new_uuid.String(), expense.Assigned_uid, expense.Reason, expense.Amount, expense.Registered_by, expense.Date)
 
 	if err != nil {
@@ -99,7 +99,7 @@ func GetMonthExpensesHandler(w http.ResponseWriter, r *http.Request) {
 	startOfMonthFormated := startOfMonth.Format("2006-01-02 15:04:05")
 	endOfMonthFormated := endOfMonth.Format("2006-01-02 15:04:05")
 
-	expensesSQL := "SELECT expenses.expense_uid, expenses.reason, CONCAT(assigned.first_name, ' ', assigned.last_name) AS assigned_to,  expenses.amount,  expenses.date FROM expenses INNER JOIN users AS assigned ON expenses.assigned_uid = assigned.user_uid INNER JOIN users AS registrar ON expenses.registered_by_uid = registrar.user_uid  WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ?  ORDER by expenses.date DESC"
+	expensesSQL := "SELECT expenses.expense_uid, expenses.reason, CONCAT(assigned.first_name, ' ', assigned.last_name) AS assigned_to,  expenses.amount,  expenses.date FROM \"expenses\" INNER JOIN users AS assigned ON expenses.assigned_uid = assigned.user_uid INNER JOIN users AS registrar ON expenses.registered_by_uid = registrar.user_uid  WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2  ORDER by expenses.date DESC"
 	expenses := models.MonthlyExpensesGroup{}
 
 	datos, err := db.DB.Query(expensesSQL, startOfMonthFormated, endOfMonthFormated)
@@ -136,7 +136,7 @@ func GetMonthExpensesByIdHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	expenseSql := "SELECT expenses.assigned_uid as assigned_to_uid, CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to, expenses.reason, expenses.amount, expenses.registered_by_uid, expenses.date FROM expenses INNER JOIN users on users.user_uid = expenses.registered_by_uid INNER JOIN users as assigned on assigned.user_uid = expenses.assigned_uid WHERE expense_uid = ?"
+	expenseSql := "SELECT expenses.assigned_uid as assigned_to_uid, CONCAT(assigned.first_name, ' ', assigned.last_name) as assigned_to, expenses.reason, expenses.amount, expenses.registered_by_uid, expenses.date FROM \"expenses\" INNER JOIN users on users.user_uid = expenses.registered_by_uid INNER JOIN users as assigned on assigned.user_uid = expenses.assigned_uid WHERE expense_uid = $1"
 	vars := mux.Vars(r)
 
 	expenseRow := db.DB.QueryRow(expenseSql, vars["id"]) // e.g., "2025-06-01"
@@ -178,7 +178,7 @@ func DeleteExpenseByIdHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	expenseSql := "UPDATE expenses SET delete_flag = 1 WHERE expense_uid = ? "
+	expenseSql := "UPDATE \"expenses\" SET \"delete_flag\" = 1 WHERE \"expense_uid\" = $1"
 
 	vars := mux.Vars(r)
 
@@ -274,8 +274,8 @@ func GetExpensesReport(w http.ResponseWriter, r *http.Request) {
 
 	// startDate, err := time.Parse("2006-01-02", paymentRequested.Start_date)
 
-	expenseDataSql := "SELECT expenses.expense_uid, expenses.reason, assigned.first_name as assigned_first_name,assigned.last_name as assigned_last_name,expenses.amount, expenses.date FROM expenses INNER JOIN users AS assigned ON expenses.assigned_uid = assigned.user_uid INNER JOIN users AS registrar ON expenses.registered_by_uid = registrar.user_uid WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ? ORDER by expenses.date DESC"
-	monthlySQL := "SELECT DATE_FORMAT(date, '%m-%Y') AS month, SUM(amount) AS total FROM expenses WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ? GROUP BY month ORDER BY month;"
+	expenseDataSql := "SELECT expenses.expense_uid, expenses.reason, assigned.first_name as assigned_first_name,assigned.last_name as assigned_last_name,expenses.amount, expenses.date FROM \"expenses\" INNER JOIN users AS assigned ON expenses.assigned_uid = assigned.user_uid INNER JOIN users AS registrar ON expenses.registered_by_uid = registrar.user_uid WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2 ORDER by expenses.date DESC"
+	monthlySQL := "SELECT TO_CHAR(date, 'MM-YYYY') AS month, SUM(amount) AS total FROM \"expenses\" WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2 GROUP BY month ORDER BY month;"
 
 	expenseRows, err := db.DB.Query(expenseDataSql, paymentRequested.Start_date, paymentRequested.End_date)
 	expenses := models.ExpensesFileRows{}

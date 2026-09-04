@@ -63,7 +63,7 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
-	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, players.address, players.birth_dt, players.comments, players.blood_type, players.afiliation, players.sex, players.curp, players.enfermedad, players.phone_number, players.emergency_phone, players.insurance, players.insurance_name FROM players WHERE players.player_uid = ?"
+	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, players.address, players.birth_dt, players.comments, players.blood_type, players.afiliation, players.sex, players.curp, players.enfermedad, players.phone_number, players.emergency_phone, players.insurance, players.insurance_name FROM players WHERE players.player_uid = $1"
 
 	vars := mux.Vars(r)
 
@@ -123,7 +123,7 @@ func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sqlString := "INSERT INTO `players` (`player_uid`, `first_name`, `last_name`, `phone_number`, `emergency_phone`, `email`, `status`, `positions`, `birth_dt`, `blood_type`, `comments`, `credential`, `address`, `afiliation`, `sex`, `curp`, `enfermedad`, `insurance`, `insurance_name`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	sqlString := "INSERT INTO \"players\" (\"player_uid\", \"first_name\", \"last_name\", \"phone_number\", \"emergency_phone\", \"email\", \"status\", \"positions\", \"birth_dt\", \"blood_type\", \"comments\", \"credential\", \"address\", \"afiliation\", \"sex\", \"curp\", \"enfermedad\", \"insurance\", \"insurance_name\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)"
 
 	_, err := db.DB.Exec(sqlString, new_uuid.String(), player.FirstName, player.LastName, player.Phone_number, player.Emergency_number, player.Email, player.Status, nil, player.Birth_dt, player.BloodType, player.Comments, player.Credential, player.Address, player.Afiliation, player.Sex, player.Curp, player.Enfermedad, player.Insurance, player.Insurance_name)
 
@@ -169,73 +169,63 @@ func EditPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	fields := []string{}
 	values := []interface{}{}
 
+	idx := 1
+	addField := func(col string, val interface{}) {
+		fields = append(fields, fmt.Sprintf("%s = $%d", col, idx))
+		values = append(values, val)
+		idx++
+	}
+
 	if event.FirstName != nil {
-		fields = append(fields, "first_name = ?")
-		values = append(values, *event.FirstName)
+		addField("first_name", *event.FirstName)
 	}
 	if event.LastName != nil {
-		fields = append(fields, "last_name = ?")
-		values = append(values, *event.LastName)
+		addField("last_name", *event.LastName)
 	}
 	if event.Email != nil {
-		fields = append(fields, "email = ?")
-		values = append(values, *event.Email)
+		addField("email", *event.Email)
 	}
 	if event.Status != nil {
-		fields = append(fields, "status = ?")
-		values = append(values, *event.Status)
+		addField("status", *event.Status)
 	}
 	if event.Birth_dt != nil {
-		fields = append(fields, "birth_dt = ?")
-		values = append(values, *event.Birth_dt)
+		addField("birth_dt", *event.Birth_dt)
 	}
 	if event.Address != nil {
-		fields = append(fields, "address = ?")
-		values = append(values, *event.Address)
+		addField("address", *event.Address)
 	}
 	if event.Sex != nil {
-		fields = append(fields, "sex = ?")
-		values = append(values, *event.Sex)
+		addField("sex", *event.Sex)
 	}
 	if event.BloodType != nil {
-		fields = append(fields, "blood_type = ?")
-		values = append(values, *event.BloodType)
+		addField("blood_type", *event.BloodType)
 	}
 	if event.Comments != nil {
-		fields = append(fields, "comments = ?")
-		values = append(values, *event.Comments)
+		addField("comments", *event.Comments)
 	}
 	if event.Credential != nil {
-		fields = append(fields, "credential = ?")
-		values = append(values, *event.Credential)
+		addField("credential", *event.Credential)
 	}
 	if event.Afiliation != nil {
-		fields = append(fields, "afiliation = ?")
-		values = append(values, *event.Afiliation)
+		addField("afiliation", *event.Afiliation)
 	}
 	if event.Curp != nil {
-		fields = append(fields, "curp = ?")
-		values = append(values, *event.Curp)
+		addField("curp", *event.Curp)
 	}
 	if event.Enfermedad != nil {
-		fields = append(fields, "enfermedad = ?")
-		values = append(values, *event.Enfermedad)
+		addField("enfermedad", *event.Enfermedad)
 	}
 	if event.Phone_number != nil {
-		fields = append(fields, "phone_number = ?")
-		values = append(values, *event.Phone_number)
+		addField("phone_number", *event.Phone_number)
 	}
 	if event.Emergency_number != nil {
-		fields = append(fields, "emergency_phone = ?")
-		values = append(values, *event.Emergency_number)
+		addField("emergency_phone", *event.Emergency_number)
 	}
 	if event.Insurance != nil {
-		fields = append(fields, "insurance = ?")
-		values = append(values, *event.Insurance)
+		addField("insurance", *event.Insurance)
 	}
 	if event.Insurance_name != nil {
-		fields = append(fields, "insurance_name = ?")
-		values = append(values, *event.Insurance_name)
+		addField("insurance_name", *event.Insurance_name)
 	}
 
 	if len(fields) == 0 {
@@ -251,7 +241,7 @@ func EditPlayerHandler(w http.ResponseWriter, r *http.Request) {
 
 	values = append(values, player_uid)
 
-	query := fmt.Sprintf("UPDATE players SET %s WHERE player_uid = ?", strings.Join(fields, ", "))
+	query := fmt.Sprintf("UPDATE players SET %s WHERE player_uid = $%d", strings.Join(fields, ", "), idx)
 
 	result, err := db.DB.Exec(query, values...)
 

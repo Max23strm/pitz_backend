@@ -35,7 +35,7 @@ func GetMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	startOfMonthFormated := startOfMonth.Format("2006-01-02 15:04:05")
 	endOfMonthFormated := endOfMonth.Format("2006-01-02 15:04:05")
 
-	paymentSQL := "SELECT payments.payment_uid, CONCAT(payer.first_name, ' ', payer.last_name) AS player_name, CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.date, payment_type.payment_name FROM `payments` INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid 	 INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ?  ORDER by payments.date DESC"
+	paymentSQL := "SELECT payments.payment_uid, CONCAT(payer.first_name, ' ', payer.last_name) AS player_name, CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.date, payment_type.payment_name FROM \"payments\" INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid 	 INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN $1 AND $2  ORDER by payments.date DESC"
 	payments := models.Payments{}
 
 	datos, err := db.DB.Query(paymentSQL, startOfMonthFormated, endOfMonthFormated)
@@ -93,7 +93,7 @@ func PostMonthPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	new_uuid := uuid.New()
-	paymentSql := "INSERT INTO `payments` (`payment_uid`, `player_uid`, `payment_reference`, `amount`, `comment`, `date`, `payment_type_uid`, `created_at_dttm`, `updated_at_dttm`, `registered_by_uid`) VALUES (?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp(), ?);"
+	paymentSql := "INSERT INTO \"payments\" (\"payment_uid\", \"player_uid\", \"payment_reference\", \"amount\", \"comment\", \"date\", \"payment_type_uid\", \"created_at_dttm\", \"updated_at_dttm\", \"registered_by_uid\") VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $8);"
 	_, err := db.DB.Exec(paymentSql, new_uuid.String(), payment.Player_uid, payment.Payment_reference, payment.Amount, payment.Comment, payment.Date, payment.Payment_type_uid, payment.User_uid)
 
 	if err != nil {
@@ -147,7 +147,7 @@ func GetPaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	paymentSql := "SELECT payments.payment_uid, payments.payment_reference, payments.amount, payments.comment, payments.date, CONCAT(players.first_name, ' ', players.last_name) as player_name, payments.player_uid, payment_type.payment_name, CONCAT(creator.first_name, ' ', creator.last_name) as registered_by FROM `payments` INNER JOIN players on players.player_uid = payments.player_uid INNER JOIN users as creator on creator.user_uid = payments.registered_by_uid INNER JOIN payment_type on payment_type.payment_type_uid = payments.payment_type_uid WHERE payment_uid = ? AND payments.delete_flag = 0"
+	paymentSql := "SELECT payments.payment_uid, payments.payment_reference, payments.amount, payments.comment, payments.date, CONCAT(players.first_name, ' ', players.last_name) as player_name, payments.player_uid, payment_type.payment_name, CONCAT(creator.first_name, ' ', creator.last_name) as registered_by FROM \"payments\" INNER JOIN players on players.player_uid = payments.player_uid INNER JOIN users as creator on creator.user_uid = payments.registered_by_uid INNER JOIN payment_type on payment_type.payment_type_uid = payments.payment_type_uid WHERE payment_uid = $1 AND payments.delete_flag = 0"
 
 	vars := mux.Vars(r)
 	paymentRow := db.DB.QueryRow(paymentSql, vars["id"])
@@ -190,7 +190,7 @@ func DeletePaymentByIdHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	paymentSql := "UPDATE payments SET delete_flag = 1 WHERE payment_uid = ? "
+	paymentSql := "UPDATE \"payments\" SET \"delete_flag\" = 1 WHERE \"payment_uid\" = $1"
 
 	vars := mux.Vars(r)
 
@@ -275,8 +275,8 @@ func GetPaymentsReport(w http.ResponseWriter, r *http.Request) {
 
 	// startDate, err := time.Parse("2006-01-02", paymentRequested.Start_date)
 
-	paymentDataSql := "SELECT payments.date AS payment_date, payments.payment_uid, payer.first_name as player_name,payer.last_name as player_last_name,CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.comment, payment_type.payment_name FROM `payments` INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ? ORDER by payments.date ASC"
-	monthlySQL := "SELECT DATE_FORMAT(date, '%m-%Y') AS month, SUM(amount) AS total FROM payments WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ? GROUP BY month ORDER BY month;"
+	paymentDataSql := "SELECT payments.date AS payment_date, payments.payment_uid, payer.first_name as player_name,payer.last_name as player_last_name,CONCAT(registrar.first_name, ' ', registrar.last_name) AS registered_by_name, payments.player_uid, payments.amount, payments.comment, payment_type.payment_name FROM \"payments\" INNER JOIN players AS payer ON payments.player_uid = payer.player_uid INNER JOIN users AS registrar ON payments.registered_by_uid = registrar.user_uid INNER JOIN payment_type ON payments.payment_type_uid = payment_type.payment_type_uid WHERE payments.delete_flag = 0 AND payments.date BETWEEN $1 AND $2 ORDER by payments.date ASC"
+	monthlySQL := "SELECT TO_CHAR(date, 'MM-YYYY') AS month, SUM(amount) AS total FROM \"payments\" WHERE payments.delete_flag = 0 AND payments.date BETWEEN $1 AND $2 GROUP BY month ORDER BY month;"
 
 	paymentsRows, err := db.DB.Query(paymentDataSql, paymentRequested.Start_date, paymentRequested.End_date)
 	payments := models.PaymentFileRows{}
