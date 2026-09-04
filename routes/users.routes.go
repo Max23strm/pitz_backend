@@ -62,7 +62,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	userSql := "SELECT user_uid, email, username, first_name, last_name from users WHERE user_uid = ?"
+	userSql := "SELECT user_uid, email, username, first_name, last_name from users WHERE user_uid = $1"
 	vars := mux.Vars(r)
 
 	userBasicData := db.DB.QueryRow(userSql, vars["id"])
@@ -107,7 +107,7 @@ func GetBasicUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userSql := "SELECT user_uid, email, username from users WHERE user_uid = ?"
+	userSql := "SELECT user_uid, email, username from users WHERE user_uid = $1"
 	vars := mux.Vars(r)
 
 	userBasicData := db.DB.QueryRow(userSql, vars["id"])
@@ -178,7 +178,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(respuesta)
 		return
 	}
-	newPassSql := "UPDATE `users` SET `hashed_password` = ? WHERE `users`.`user_uid` = ?; "
+	newPassSql := "UPDATE \"users\" SET \"hashed_password\" = $1 WHERE \"users\".\"user_uid\" = $2; "
 
 	_, err = db.DB.Exec(newPassSql, string(hashed), player_uid)
 	if err != nil {

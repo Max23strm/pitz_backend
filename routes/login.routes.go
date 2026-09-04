@@ -14,7 +14,7 @@ import (
 func getUserFromDB(username string) (*models.UserFromDb, error) {
 	var user models.UserFromDb
 
-	query := `SELECT user_uid, username, hashed_password FROM users WHERE username = ? Or email= ? LIMIT 1;`
+	query := `SELECT user_uid, username, hashed_password FROM users WHERE username = $1 Or email= $2 LIMIT 1;`
 	row := db.DB.QueryRow(query, username, username)
 
 	err := row.Scan(&user.User_uid, &user.User, &user.HashedPassword)

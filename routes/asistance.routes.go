@@ -12,7 +12,7 @@ import (
 )
 
 func GetAsistanceTypesHandler(w http.ResponseWriter, r *http.Request) {
-	asistanceSql := "SELECT * FROM `asistance_types`"
+	asistanceSql := "SELECT * FROM \"asistance_types\""
 	asistances := models.AsistanceTypes{}
 
 	datos, err := db.DB.Query(asistanceSql)
@@ -34,11 +34,11 @@ func GetAsistanceTypesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAsistancePlayerbyIdHandler(w http.ResponseWriter, r *http.Request) {
-	assistanceSql := "SELECT asistance.player_uid, asistance.event_uid, asistance.asistance_type_uid, asistance_types.name, events.date, events.event_name FROM asistance INNER JOIN events ON asistance.event_uid = events.event_uid INNER JOIN asistance_types ON asistance.asistance_type_uid = asistance_types.asistance_type_uid WHERE asistance.player_uid ="
+	assistanceSql := "SELECT asistance.player_uid, asistance.event_uid, asistance.asistance_type_uid, asistance_types.name, events.date, events.event_name FROM asistance INNER JOIN events ON asistance.event_uid = events.event_uid INNER JOIN asistance_types ON asistance.asistance_type_uid = asistance_types.asistance_type_uid WHERE asistance.player_uid = $1"
 	vars := mux.Vars(r)
 
 	asistance := models.Asistances{}
-	datos, err := db.DB.Query(assistanceSql + "'" + vars["id"] + "'")
+	datos, err := db.DB.Query(assistanceSql, vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		log.Fatal("Error obteniendo asistencia: ", err)

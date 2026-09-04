@@ -10,104 +10,90 @@ func DefineFields(player models.PostPlayerDetails) ([]string, []interface{}) {
 	fields := []string{}
 	values := []interface{}{}
 
-	fields = append(fields, "player_uid = ?")
+	idx := 1
+	addField := func(col string, val interface{}) {
+		fields = append(fields, col+" = $"+strconv.Itoa(idx))
+		values = append(values, val)
+		idx++
+	}
 
-	fields = append(fields, "firstName = ?")
-	values = append(values, player.FirstName)
+	addField("player_uid", "")
+	addField("first_name", player.FirstName)
+	addField("last_name", player.LastName)
 
-	fields = append(fields, "last_name = ?")
-	values = append(values, player.LastName)
-
-	fields = append(fields, "phone_number = ?")
 	if player.Phone_number != nil {
-		values = append(values, *player.Phone_number)
+		addField("phone_number", *player.Phone_number)
 	} else {
-		values = append(values, nil)
+		addField("phone_number", nil)
 	}
 
-	fields = append(fields, "emergency_phone = ?")
 	if player.Emergency_number != nil {
-		values = append(values, *player.Emergency_number)
+		addField("emergency_phone", *player.Emergency_number)
 	} else {
-		values = append(values, nil)
+		addField("emergency_phone", nil)
 	}
 
-	fields = append(fields, "email = ?")
-	values = append(values, player.Email)
+	addField("email", player.Email)
+	addField("status", player.Status)
 
-	fields = append(fields, "status = ?")
-	values = append(values, player.Status)
-
-	fields = append(fields, "positions = ?")
 	// if player.Positions != nil {
 	// 	values = append(values, *player.Positions)
 	// } else {
-	values = append(values, nil)
+	addField("positions", nil)
 	// }
 
-	fields = append(fields, "birth_dt = ?")
-	values = append(values, player.Birth_dt)
+	addField("birth_dt", player.Birth_dt)
 
-	fields = append(fields, "blood_type = ?")
 	if player.BloodType != nil {
-		values = append(values, *player.BloodType)
+		addField("blood_type", *player.BloodType)
 	} else {
-		values = append(values, nil)
+		addField("blood_type", nil)
 	}
 
-	fields = append(fields, "comments = ?")
 	if player.Comments != nil {
-		values = append(values, *player.Comments)
+		addField("comments", *player.Comments)
 	} else {
-		values = append(values, nil)
+		addField("comments", nil)
 	}
 
-	fields = append(fields, "credential = ?")
 	if player.Credential != nil {
-		values = append(values, *player.Credential)
+		addField("credential", *player.Credential)
 	} else {
-		values = append(values, nil)
+		addField("credential", nil)
 	}
 
-	fields = append(fields, "address = ?")
 	if player.Address != nil {
-		values = append(values, *player.Address)
+		addField("address", *player.Address)
 	} else {
-		values = append(values, nil)
+		addField("address", nil)
 	}
 
-	fields = append(fields, "afiliation = ?")
 	if player.Afiliation != nil {
-		values = append(values, *player.Afiliation)
+		addField("afiliation", *player.Afiliation)
 	} else {
-		values = append(values, nil)
+		addField("afiliation", nil)
 	}
 
-	fields = append(fields, "sex = ?")
-	values = append(values, *&player.Sex)
+	addField("sex", player.Sex)
 
-	fields = append(fields, "curp = ?")
 	if player.Curp != nil {
-		values = append(values, *&player.Curp)
+		addField("curp", *player.Curp)
 	} else {
-		values = append(values, nil)
+		addField("curp", nil)
 	}
 
-	fields = append(fields, "enfermedad = ?")
 	if player.Enfermedad != nil {
-		values = append(values, *&player.Enfermedad)
+		addField("enfermedad", *player.Enfermedad)
 	} else {
-		values = append(values, nil)
+		addField("enfermedad", nil)
 	}
 
-	fields = append(fields, "insurance = ?")
-	values = append(values, strconv.FormatBool(player.Insurance))
+	addField("insurance", player.Insurance)
 
-	fields = append(fields, "insurance_name = ?")
 	if player.Insurance_name != nil {
-		values = append(values, *&player.Insurance_name)
+		addField("insurance_name", *player.Insurance_name)
 	} else {
-		values = append(values, nil)
+		addField("insurance_name", nil)
 	}
 
 	return fields, values

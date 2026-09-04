@@ -45,7 +45,7 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetEventByIdHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Que hace aca?")
-	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state, address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = ?"
+	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state, address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = $1"
 	vars := mux.Vars(r)
 
 	eventData := db.DB.QueryRow(eventsSql, vars["id"])
@@ -117,7 +117,7 @@ func NewEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	new_uuid := uuid.New()
-	eventsSql := "INSERT INTO `events`( event_uid, `event_type`, `date`, `event_name`, `event_state_uid`, `address`, `coordinates`) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	eventsSql := "INSERT INTO \"events\"( event_uid, \"event_type\", \"date\", \"event_name\", \"event_state_uid\", \"address\", \"coordinates\") VALUES ($1, $2, $3, $4, $5, $6, $7)"
 
 	_, err := db.DB.Exec(eventsSql, new_uuid.String(), event.Event_type_uid, event.Date, event.Event_name, event.Event_state_uid, event.Address, event.Coordinates)
 
@@ -160,29 +160,30 @@ func EditEventHandler(w http.ResponseWriter, r *http.Request) {
 	fields := []string{}
 	values := []interface{}{}
 
+	idx := 1
+	addField := func(col string, val interface{}) {
+		fields = append(fields, fmt.Sprintf("%s = $%d", col, idx))
+		values = append(values, val)
+		idx++
+	}
+
 	if event.Event_name != nil {
-		fields = append(fields, "event_name = ?")
-		values = append(values, *event.Event_name)
+		addField("event_name", *event.Event_name)
 	}
 	if event.Event_type_uid != nil {
-		fields = append(fields, "event_type = ?")
-		values = append(values, *event.Event_type_uid)
+		addField("event_type", *event.Event_type_uid)
 	}
 	if event.Date != nil {
-		fields = append(fields, "date = ?")
-		values = append(values, *event.Date)
+		addField("date", *event.Date)
 	}
 	if event.Event_state_uid != nil {
-		fields = append(fields, "event_state_uid = ?")
-		values = append(values, *event.Event_state_uid)
+		addField("event_state_uid", *event.Event_state_uid)
 	}
 	if event.Address != nil {
-		fields = append(fields, "address = ?")
-		values = append(values, *event.Address)
+		addField("address", *event.Address)
 	}
 	if event.Coordinates != nil {
-		fields = append(fields, "coordinates = ?")
-		values = append(values, *event.Coordinates)
+		addField("coordinates", *event.Coordinates)
 	}
 
 	if len(fields) == 0 {
@@ -198,7 +199,7 @@ func EditEventHandler(w http.ResponseWriter, r *http.Request) {
 	values = append(values, event_uid)
 
 	// Final query
-	query := fmt.Sprintf("UPDATE events SET %s WHERE event_uid = ?", strings.Join(fields, ", "))
+	query := fmt.Sprintf("UPDATE events SET %s WHERE event_uid = $%d", strings.Join(fields, ", "), idx)
 
 	result, err := db.DB.Exec(query, values...)
 

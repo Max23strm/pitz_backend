@@ -13,8 +13,8 @@ import (
 
 func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	playersSql := "SELECT COUNT(*) AS active_players FROM players WHERE players.status = 1;"
-	incomeSql := "SELECT  COALESCE(SUM(payments.amount), 0) AS monthly_income FROM payments WHERE payments.delete_flag = 0 AND payments.date BETWEEN ? AND ?;"
-	expensesSql := "SELECT  COALESCE(SUM(expenses.amount), 0) AS monthly_expense FROM expenses WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN ? AND ?;"
+	incomeSql := "SELECT  COALESCE(SUM(payments.amount), 0) AS monthly_income FROM \"payments\" WHERE payments.delete_flag = 0 AND payments.date BETWEEN $1 AND $2;"
+	expensesSql := "SELECT  COALESCE(SUM(expenses.amount), 0) AS monthly_expense FROM \"expenses\" WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2;"
 
 	dateStr := r.URL.Query().Get("date")
 
