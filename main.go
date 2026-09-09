@@ -57,6 +57,13 @@ func main() {
 	r.HandleFunc(baseUrl+"/players", routes.DeletePlayerHandler).Methods("DELETE")
 	r.HandleFunc(baseUrl+"/players/{id}", routes.GetPlayerByIdHandler).Methods("GET")
 
+	//ENTITIES
+	r.HandleFunc(baseUrl+"/entities", routes.GetAllEntities).Methods("GET")
+	// r.HandleFunc(baseUrl+"/entitiesByUser", routes.GetEntitiesByUser).Methods("GET")
+	r.Handle(baseUrl+"/entitiesByUser", middleware.AuthMiddleware(http.HandlerFunc(routes.GetEntitiesByUser))).Methods("GET")
+	r.HandleFunc(baseUrl+"/newEntity", routes.InsertEntity).Methods("POST")
+	r.Handle(baseUrl+"/assignEntity", middleware.AuthMiddleware(http.HandlerFunc(routes.AssignEntity))).Methods("POST")
+
 	//EVENTS
 	r.HandleFunc(baseUrl+"/events", routes.GetEventsHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/events/eventById/{id}", routes.GetEventByIdHandler).Methods("GET")

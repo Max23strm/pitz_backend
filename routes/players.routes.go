@@ -126,7 +126,7 @@ func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.SuccessResponse(
+	helpers.CreatedResponse(
 		w,
 		"Stored succesfully",
 		new_uuid.String(),
