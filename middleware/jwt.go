@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -35,15 +36,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+			helpers.UnauthorizedResponse(w, "Missing or invalid Authorization header")
 			return
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims, ok := ValidateJWT(tokenStr)
-		if ok != true {
-			http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+		if ok {
+			helpers.UnauthorizedResponse(w, "Unauthorized: invalid token")
 			return
 		}
 

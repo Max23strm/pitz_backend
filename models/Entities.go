@@ -1,13 +1,16 @@
 package models
 
-type Entities struct {
-	Entity_uid    string `json:"entity_uid"`
-	Name          string `json:"name"`
-	Short_name    string `json:"short_name"`
-	Country_code  string `json:"country_code"`
-	Currency_code string `json:"currency_code"`
-	Entity_name   string `json:"entity_name"`
+type Entitie struct {
+	Entity_uid    string   `json:"entity_uid"`
+	Name          string   `json:"name"`
+	Short_name    string   `json:"short_name"`
+	Country_code  string   `json:"country_code"`
+	Currency_code string   `json:"currency_code"`
+	Colors        []string `json:"colors"`
+	Delete_flag   int      `json:"delete_flag"`
 }
+
+type Entities []Entitie
 
 type EntityDetail struct {
 	Entity_uid     string     `json:"entity_uid"`
@@ -21,6 +24,13 @@ type EntityDetail struct {
 	Users_assigned []AllUsers `json:"users_assigned"`
 }
 
+type EntityCeate struct {
+	Name          string   `json:"name"`
+	Short_name    string   `json:"short_name"`
+	Country_code  string   `json:"country_code"`
+	Currency_code string   `json:"currency_code"`
+	Colors        []string `json:"colors"`
+}
 type EntityPost struct {
 	Name           string     `json:"name"`
 	Short_name     string     `json:"short_name"`
@@ -42,8 +52,13 @@ type EntityUpdate struct {
 }
 
 type EntityAssignation struct {
-	User_uid   string `json:"user_uid"`
-	Entity_uid string `json:"entity_uid"`
+	User_uid      string   `json:"user_uid"`
+	Entity_uid    string   `json:"entity_uid"`
+	Name          *string  `json:"name,omitempty"`
+	Short_name    *string  `json:"short_name,omitempty"`
+	Country_code  *string  `json:"country_code,omitempty"`
+	Currency_code *string  `json:"currency_code,omitempty"`
+	Colors        []string `json:"colors"`
 }
 
 type EntitiesAssigned []EntityAssignation
