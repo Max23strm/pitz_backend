@@ -42,10 +42,11 @@ type EntityUpdate struct {
 }
 
 type EntityAssignation struct {
-	User_uid        string `json:"user_uid"`
-	Entity_uid      string `json:"entity_uid"`
-	Assigned_by_uid string `json:"assigned_by_uid"`
+	User_uid   string `json:"user_uid"`
+	Entity_uid string `json:"entity_uid"`
 }
+
+type EntitiesAssigned []EntityAssignation
 
 type EntityUnassign struct {
 	User_entity_uid string `json:"user_entity_uid"`

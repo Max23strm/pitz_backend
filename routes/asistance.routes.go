@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Max23strm/pitz-backend/db"
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/gorilla/mux"
 	// "github.com/gorilla/mux"
@@ -54,6 +55,5 @@ func GetAsistancePlayerbyIdHandler(w http.ResponseWriter, r *http.Request) {
 		asistance = append(asistance, dato)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(asistance)
+	helpers.SuccessResponse(w, "", asistance)
 }

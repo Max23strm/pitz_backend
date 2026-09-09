@@ -2,11 +2,13 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/Max23strm/pitz-backend/db"
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
 	"github.com/Max23strm/pitz-backend/validations"
 	"github.com/google/uuid"
@@ -23,13 +25,7 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 
 	datos, err := db.DB.Query(playersSql)
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error obteniendo jugadores: " + err.Error(),
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.ErrorResponse(w, http.StatusBadRequest, "Error obtaining players", err)
 
 		return
 	}
@@ -38,68 +34,65 @@ func GetPlayersHandler(w http.ResponseWriter, r *http.Request) {
 		dato := models.Player{}
 		err := datos.Scan(&dato.Player_uid, &dato.FirstName, &dato.LastName, &dato.Status, &dato.Email)
 		if err != nil {
-			respuesta := map[string]interface{}{
-				"isSuccess": false,
-				"estado":    "Error",
-				"mensaje":   "Error obteniendo datos: " + err.Error(),
-			}
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(respuesta)
-
+			helpers.ErrorResponse(w, http.StatusBadRequest, "Error scanning players", err)
 			return
 		}
 
 		players = append(players, dato)
 	}
 
-	respuesta := map[string]interface{}{
-		"isSuccess": true,
-		"estado":    "OK",
-		"data":      players,
-	}
-	w.WriteHeader(http.StatusOK)
-
-	json.NewEncoder(w).Encode(respuesta)
+	helpers.SuccessResponse(w, "", players)
 }
 
 func GetPlayerByIdHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
 	playerSql := "SELECT players.player_uid, players.first_name, players.last_name, players.email, players.status, players.address, players.birth_dt, players.comments, players.blood_type, players.afiliation, players.sex, players.curp, players.enfermedad, players.phone_number, players.emergency_phone, players.insurance, players.insurance_name FROM players WHERE players.player_uid = $1"
 
 	vars := mux.Vars(r)
 
-	playerRow := db.DB.QueryRow(playerSql, vars["id"])
-
-	player := models.PlayerDetails{}
-
-	err := playerRow.Scan(&player.Player_uid, &player.FirstName, &player.LastName, &player.Email, &player.Status, &player.Address, &player.Birth_dt, &player.Comments, &player.BloodType, &player.Afiliation, &player.Sex, &player.Curp, &player.Enfermedad, &player.Phone_number, &player.Emergency_number, &player.Insurance, &player.Insurance_name)
+	parsedUID, err := uuid.Parse(vars["id"])
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error obteniendo jugador: " + err.Error(),
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
-
+		helpers.BadRequestResponse(
+			w,
+			"Player identifier is not valid",
+			err,
+			"NO_VALID_ID",
+		)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(player)
+	playerRow := db.DB.QueryRow(playerSql, parsedUID)
+
+	player := models.PlayerDetails{}
+
+	err = playerRow.Scan(&player.Player_uid, &player.FirstName, &player.LastName, &player.Email, &player.Status, &player.Address, &player.Birth_dt, &player.Comments, &player.BloodType, &player.Afiliation, &player.Sex, &player.Curp, &player.Enfermedad, &player.Phone_number, &player.Emergency_number, &player.Insurance, &player.Insurance_name)
+	if err != nil {
+		helpers.NotFoundResponse(
+			w,
+			"Player not found",
+		)
+		return
+	}
+
+	helpers.SuccessResponse(
+		w,
+		"Fetched successfully",
+		player,
+	)
 }
 
 func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
+
 	var player models.PostPlayerDetails
 	new_uuid := uuid.New()
 
 	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
-		fmt.Println(err)
-		respuesta := map[string]string{
-			"estado":  "Error",
-			"mensaje": "Error al obtener datos",
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "No information sent", err, "EMPTY_DATA")
 		return
 	}
 
@@ -107,18 +100,14 @@ func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	validationErrors := validations.PlayersPostValidations(player)
 
 	if len(validationErrors) > 0 {
+		message := strings.Join(validationErrors, ", ")
 
-		var errors []string
-		errors = append(errors, validationErrors...)
-
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   errors,
-		}
-
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(
+			w,
+			message,
+			errors.New(message),
+			"VALIDATION_ERRORS",
+		)
 
 		return
 	}
@@ -128,41 +117,33 @@ func PostPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := db.DB.Exec(sqlString, new_uuid.String(), player.FirstName, player.LastName, player.Phone_number, player.Emergency_number, player.Email, player.Status, nil, player.Birth_dt, player.BloodType, player.Comments, player.Credential, player.Address, player.Afiliation, player.Sex, player.Curp, player.Enfermedad, player.Insurance, player.Insurance_name)
 
 	if err != nil {
-		fmt.Println(err)
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error al enviar informaciín",
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(
+			w,
+			"Unable to store information",
+			err,
+			"STORING_ERROR",
+		)
 		return
 	}
 
-	uuidResponse := map[string]interface{}{
-		"isSuccess":  true,
-		"estado":     "Creado",
-		"player_uid": new_uuid.String(),
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(uuidResponse)
+	helpers.SuccessResponse(
+		w,
+		"Stored succesfully",
+		new_uuid.String(),
+	)
 }
 
 func EditPlayerHandler(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
 	vars := mux.Vars(r)
 
 	var event models.PutPlayerDetails
 	player_uid := vars["id"]
-	//FALTA IMPLEMENTAR EL RESTO
+
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		fmt.Println(err)
-		respuesta := map[string]string{
-			"estado":  "Error",
-			"mensaje": "Error al obtener datos",
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "No information sent", err, "EMPTY_DATA")
 		return
 	}
 
@@ -229,13 +210,7 @@ func EditPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(fields) == 0 {
-		respuesta := map[string]interface{}{
-			"isSuccess":  false,
-			"estado":     "No fields to update",
-			"player_uid": player_uid,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "No fields to update", errors.New(""), "EMPTY_DATA")
 		return
 	}
 
@@ -246,35 +221,17 @@ func EditPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := db.DB.Exec(query, values...)
 
 	if err != nil {
-		errRes := map[string]interface{}{
-			"isSuccess":  false,
-			"estado":     err,
-			"player_uid": player_uid,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(errRes)
+		helpers.BadRequestResponse(w, "Error updating", err, "ERROR_UPDATING")
 		return
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		respuesta := map[string]string{
-			"estado":  "Error",
-			"mensaje": "Jugador no encontrado",
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "Error updating", err, "NOT_FOUND")
 		return
 	}
 
-	uuidResponse := map[string]interface{}{
-		"isSuccess":  true,
-		"estado":     "Editado",
-		"player_uid": vars["id"],
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(uuidResponse)
+	helpers.SuccessResponse(w, "Edited succesfully", vars["id"])
 }
 
 func DeletePlayerHandler(w http.ResponseWriter, r *http.Request) {
