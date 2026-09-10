@@ -46,6 +46,11 @@ type EventType struct {
 	Type_name      string `json:"event_type_name"`
 }
 
+type EventState struct {
+	Event_state_uid string `json:"event_state_uid"`
+	Event_state     string `json:"event_state_name"`
+}
+
 type Asistance struct {
 	Event_uid          string    `json:"event_uid"`
 	Player_uid         string    `json:"player_uid"`
@@ -59,6 +64,7 @@ type Asistances []Asistance
 
 type Events []Event
 type EventsTypes []EventType
+type EventStates []EventState
 
 type GoogleCalendarEvent struct {
 	Id        string `json:"google_id"`

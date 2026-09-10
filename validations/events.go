@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Max23strm/pitz-backend/models"
@@ -13,7 +14,7 @@ func EventsPostValidations(event models.EventPost) []string {
 	if strings.TrimSpace(event.Event_name) == "" {
 		validationErrors = append(validationErrors, "El nombre es requerido.")
 	}
-
+	fmt.Println(event.Date)
 	if event.Date.IsZero() {
 		validationErrors = append(validationErrors, "La fecha es requerida.")
 	}

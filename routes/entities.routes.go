@@ -27,7 +27,8 @@ func GetEntitiesByUser(w http.ResponseWriter, r *http.Request) {
 			entity.name,
 			entity.currency_code,
 			entity.country_code,
-			entity.colors
+			entity.colors,
+			COALESCE(entity.logo, '')
 		FROM user_entities AS assignment
 		INNER JOIN entities AS entity
 			ON assignment.entity_uid = entity.entity_uid
@@ -46,7 +47,7 @@ func GetEntitiesByUser(w http.ResponseWriter, r *http.Request) {
 	for datos.Next() {
 		dato := models.EntityAssignation{}
 
-		if err := datos.Scan(&dato.User_uid, &dato.Entity_uid, &dato.Short_name, &dato.Name, &dato.Currency_code, &dato.Country_code, pq.Array(&dato.Colors)); err != nil {
+		if err := datos.Scan(&dato.User_uid, &dato.Entity_uid, &dato.Short_name, &dato.Name, &dato.Currency_code, &dato.Country_code, pq.Array(&dato.Colors), &dato.Logo); err != nil {
 			helpers.BadRequestResponse(w, "Error fetching entities", err, "ERROR_FETCHING")
 			return
 		}
@@ -90,9 +91,9 @@ func InsertEntity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sqlString := "INSERT INTO \"entities\" ( \"short_name\", \"name\", \"currency_code\", \"country_code\", \"colors\") VALUES ($1, $2, $3, $4, $5)"
+	sqlString := "INSERT INTO \"entities\" ( \"short_name\", \"name\", \"currency_code\", \"country_code\", \"colors\", \"logo\") VALUES ($1, $2, $3, $4, $5, $6)"
 
-	_, err := db.DB.Exec(sqlString, entity.Short_name, entity.Name, entity.Currency_code, entity.Country_code, pq.Array(entity.Colors))
+	_, err := db.DB.Exec(sqlString, entity.Short_name, entity.Name, entity.Currency_code, entity.Country_code, pq.Array(entity.Colors), entity.Logo)
 	if err != nil {
 		helpers.BadRequestResponse(
 			w,
@@ -149,7 +150,7 @@ func GetAllEntities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entitiesSql := "SELECT entity_uid, short_name, name, currency_code, country_code, colors, delete_flag FROM entities"
+	entitiesSql := "SELECT entity_uid, short_name, name, currency_code, country_code, colors, COALESCE(logo, ''), delete_flag FROM entities"
 	entities := models.Entities{}
 
 	datos, err := db.DB.Query(entitiesSql)
@@ -161,7 +162,7 @@ func GetAllEntities(w http.ResponseWriter, r *http.Request) {
 
 	for datos.Next() {
 		dato := models.Entitie{}
-		err := datos.Scan(&dato.Entity_uid, &dato.Short_name, &dato.Name, &dato.Currency_code, &dato.Country_code, pq.Array(&dato.Colors), &dato.Delete_flag)
+		err := datos.Scan(&dato.Entity_uid, &dato.Short_name, &dato.Name, &dato.Currency_code, &dato.Country_code, pq.Array(&dato.Colors), &dato.Logo, &dato.Delete_flag)
 		if err != nil {
 			helpers.ErrorResponse(w, http.StatusBadRequest, "Error scanning players", err)
 			return

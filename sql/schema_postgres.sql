@@ -180,12 +180,16 @@ CREATE TABLE IF NOT EXISTS "entities" (
     "currency_code" CHAR(3) NOT NULL DEFAULT 'USD',
     "country_code" CHAR(4) NOT NULL DEFAULT 'USA',
     "colors" VARCHAR(7)[] NOT NULL DEFAULT '{}',
+    "logo" TEXT,
     "created_at_dttm" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at_dttm" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "delete_flag" SMALLINT NOT NULL DEFAULT 0,
     CONSTRAINT "chk_colors_max_three"
         CHECK (array_length("colors", 1) IS NULL OR array_length("colors", 1) <= 3)
 );
+
+ALTER TABLE "entities"
+    ADD COLUMN IF NOT EXISTS "logo" TEXT;
 
 -- =====================================================================
 -- USER ENTITIES ASSIGNATION

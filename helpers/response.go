@@ -8,7 +8,7 @@ import (
 type Response struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    interface{} `json:"data"`
 	Error   string      `json:"error,omitempty"`
 	Code    string      `json:"code,omitempty"`
 }
@@ -58,6 +58,7 @@ func ErrorResponse(w http.ResponseWriter, statusCode int, message string, err er
 		Success: false,
 		Message: message,
 		Code:    code,
+		Data:    nil,
 	}
 
 	if err != nil {

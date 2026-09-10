@@ -29,61 +29,54 @@ func LoginSession(w http.ResponseWriter, r *http.Request) {
 
 	var creds models.LoginCred
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error al obtener datos" + err.Error(),
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(
+			w,
+			"Error obtainig data",
+			err,
+			"NO_DATA",
+		)
 		return
 	}
 
 	user, err := getUserFromDB(creds.User)
 
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error obteniendo usuario",
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.InternalServerErrorResponse(
+			w,
+			"Error validating credentials",
+		)
 		return
 	}
 
 	if !validations.CheckPassword(creds.Password, strings.TrimSpace(user.HashedPassword)) {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Contraseña inválida",
-		}
-		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.ForbiddenResponse(
+			w,
+			"Error validating credentials",
+		)
 		return
 	}
 	token, expiration, err := helpers.GenerateJWT(user.User_uid)
 
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error interno",
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.InternalServerErrorResponse(
+			w,
+			"Error validating credentials",
+		)
 		return
 	}
 
 	tokenResponse := map[string]interface{}{
-		"isSuccess":  true,
-		"estado":     "Ok",
 		"token":      token,
 		"expiration": expiration,
 	}
+	helpers.SuccessResponse(
+		w,
+		"loged in",
+		tokenResponse,
+	)
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tokenResponse)
+	// w.WriteHeader(http.StatusOK)
+	// json.NewEncoder(w).Encode(tokenResponse)
 
 }
 
