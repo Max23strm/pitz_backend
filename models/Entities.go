@@ -7,6 +7,7 @@ type Entitie struct {
 	Country_code  string   `json:"country_code"`
 	Currency_code string   `json:"currency_code"`
 	Colors        []string `json:"colors"`
+	Logo          string   `json:"logo,omitempty"`
 	Delete_flag   int      `json:"delete_flag"`
 }
 
@@ -30,6 +31,7 @@ type EntityCeate struct {
 	Country_code  string   `json:"country_code"`
 	Currency_code string   `json:"currency_code"`
 	Colors        []string `json:"colors"`
+	Logo          string   `json:"logo,omitempty"`
 }
 type EntityPost struct {
 	Name           string     `json:"name"`
@@ -59,6 +61,7 @@ type EntityAssignation struct {
 	Country_code  *string  `json:"country_code,omitempty"`
 	Currency_code *string  `json:"currency_code,omitempty"`
 	Colors        []string `json:"colors"`
+	Logo          string   `json:"logo,omitempty"`
 }
 
 type EntitiesAssigned []EntityAssignation

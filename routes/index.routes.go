@@ -8,10 +8,15 @@ import (
 
 	"github.com/Max23strm/pitz-backend/calendar"
 	"github.com/Max23strm/pitz-backend/db"
+	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
+	"github.com/Max23strm/pitz-backend/validations"
 )
 
 func HomeHanlder(w http.ResponseWriter, r *http.Request) {
+	if !validations.ValidateContext(w, r) {
+		return
+	}
 	playersSql := "SELECT COUNT(*) AS active_players FROM players WHERE players.status = 1;"
 	incomeSql := "SELECT  COALESCE(SUM(payments.amount), 0) AS monthly_income FROM \"payments\" WHERE payments.delete_flag = 0 AND payments.date BETWEEN $1 AND $2;"
 	expensesSql := "SELECT  COALESCE(SUM(expenses.amount), 0) AS monthly_expense FROM \"expenses\" WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2;"
@@ -20,13 +25,7 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Invalid date format. Use YYYY-MM-DD",
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "Invalid date format. Use YYYY-MM-DD", err, "INVALID_DATE")
 		return
 	}
 
@@ -82,35 +81,17 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	}
 	err = expenseRow.Scan(&finalResponse.Monthly_expense)
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error obteniendo ingreso mensual: " + err.Error(),
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "Error fetching income", err, "INCOME_ERR")
 
 		return
 	}
 	err = playersRow.Scan(&finalResponse.Players_amount)
 	if err != nil {
-		respuesta := map[string]interface{}{
-			"isSuccess": false,
-			"estado":    "Error",
-			"mensaje":   "Error obteniendo jugadores activos: " + err.Error(),
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(respuesta)
+		helpers.BadRequestResponse(w, "Error fetching players", err, "PLAYERS_ERR")
 
 		return
 	}
 
-	respuesta := map[string]interface{}{
-		"isSuccess": true,
-		"estado":    "OK",
-		"data":      finalResponse,
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(respuesta)
+	helpers.SuccessResponse(w, "success", finalResponse)
 
 }

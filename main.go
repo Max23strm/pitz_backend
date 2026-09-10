@@ -59,7 +59,6 @@ func main() {
 
 	//ENTITIES
 	r.HandleFunc(baseUrl+"/entities", routes.GetAllEntities).Methods("GET")
-	// r.HandleFunc(baseUrl+"/entitiesByUser", routes.GetEntitiesByUser).Methods("GET")
 	r.Handle(baseUrl+"/entitiesByUser", middleware.AuthMiddleware(http.HandlerFunc(routes.GetEntitiesByUser))).Methods("GET")
 	r.HandleFunc(baseUrl+"/newEntity", routes.InsertEntity).Methods("POST")
 	r.Handle(baseUrl+"/assignEntity", middleware.AuthMiddleware(http.HandlerFunc(routes.AssignEntity))).Methods("POST")
@@ -73,6 +72,8 @@ func main() {
 
 	//EVENT TYPES
 	r.HandleFunc(baseUrl+"/eventsTypes", routes.GetEventsTypesHandler).Methods("GET")
+	//EVENT States
+	r.HandleFunc(baseUrl+"/eventsStates", routes.GetEventsStatesHandler).Methods("GET")
 
 	//ASISTANCE TYPES
 	r.HandleFunc(baseUrl+"/asistanceTypes", routes.GetAsistanceTypesHandler).Methods("GET")
