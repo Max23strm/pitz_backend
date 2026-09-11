@@ -9,9 +9,5 @@
 pitz-backend.exe
 
 tmp/
-tmp/main.exe
-tmp/build-errors.log
 
 secrets/
-tmp/main.exe
-tmp/build-errors.log

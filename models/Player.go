@@ -12,6 +12,15 @@ type Player struct {
 	Status     int16  `json:"status"`
 	Positions  []int8 `json:"positions"`
 }
+type PlayerAssigned struct {
+	Player_uid      string `json:"player_uid"`
+	FirstName       string `json:"firstName"`
+	LastName        string `json:"last_name"`
+	Email           string `json:"email"`
+	Status          int16  `json:"status"`
+	Assignation_uid string `json:"assignation_uid"`
+	Positions       []int8 `json:"positions"`
+}
 
 type PlayerDetails struct {
 	Player_uid       string    `json:"player_uid"`

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS "players" (
     "first_name" VARCHAR(100) NOT NULL,
     "last_name" VARCHAR(100) NOT NULL,
     "email" VARCHAR(255),
+    "entity_uid" UUID NOT NULL,
     "status" SMALLINT NOT NULL DEFAULT 1,
     "positions" JSONB,
     "phone_number" VARCHAR(30),
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS "players" (
 );
 
 CREATE INDEX IF NOT EXISTS "idx_players_first_name" ON "players" ("first_name");
+CREATE INDEX IF NOT EXISTS "idx_players_entity" ON "players" ("entity_uid");
 
 -- =====================================================================
 -- EVENT TYPES
@@ -66,7 +68,8 @@ CREATE TABLE IF NOT EXISTS "event_types" (
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS "events_state" (
     "event_state_uid" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "event_state" VARCHAR(100) NOT NULL
+    "event_state" VARCHAR(100) NOT NULL,
+    "event_state_type" INTEGER NOT NULL,
 );
 
 -- =====================================================================
@@ -87,6 +90,7 @@ CREATE TABLE IF NOT EXISTS "events" (
         FOREIGN KEY ("event_type") REFERENCES "event_types" ("event_type_uid"),
     CONSTRAINT "fk_events_event_state"
         FOREIGN KEY ("event_state_uid") REFERENCES "events_state" ("event_state_uid")
+    
 );
 
 -- =====================================================================
@@ -185,11 +189,12 @@ CREATE TABLE IF NOT EXISTS "entities" (
     "updated_at_dttm" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "delete_flag" SMALLINT NOT NULL DEFAULT 0,
     CONSTRAINT "chk_colors_max_three"
-        CHECK (array_length("colors", 1) IS NULL OR array_length("colors", 1) <= 3)
+        CHECK (array_length("colors", 1) IS NULL OR array_length("colors", 1) <= 3),
+    CONSTRAINT "fk_events_entity"
+        FOREIGN KEY ("entity_uid") REFERENCES "entities" ("entity_uid"),
+    CONSTRAINT "fk_players_entity"
+        FOREIGN KEY ("entity_uid") REFERENCES "entities" ("entity_uid")
 );
-
-ALTER TABLE "entities"
-    ADD COLUMN IF NOT EXISTS "logo" TEXT;
 
 -- =====================================================================
 -- USER ENTITIES ASSIGNATION
@@ -234,12 +239,31 @@ CREATE TABLE IF NOT EXISTS "entity_teams" (
 CREATE TABLE IF NOT EXISTS "team_categories" (
     "category_uid" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "description" VARCHAR(50) NOT NULL,
-    "team_uid" UUID NOT NULL,
+    "entity_uid" UUID NOT NULL,
     "created_at_dttm" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at_dttm" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "delete_flag" SMALLINT NOT NULL DEFAULT 0,
+    CONSTRAINT "fk_team_categories_entity" FOREIGN KEY ("entity_uid") REFERENCES "entities" ("entity_uid")
+);
+
+-- =====================================================================
+-- TEAMS CATEGORY ASSIGNATION
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS "entity_team_categories" (
+    "team_uid" UUID NOT NULL,
+    "category_uid" UUID NOT NULL,
+
+    PRIMARY KEY ("team_uid", "category_uid"),
+
     CONSTRAINT "fk_team_categories_team"
-        FOREIGN KEY ("team_uid") REFERENCES "entity_teams" ("team_uid")
+        FOREIGN KEY ("team_uid")
+        REFERENCES "entity_teams" ("team_uid")
+        ON DELETE CASCADE,
+
+    CONSTRAINT "fk_team_categories_category"
+        FOREIGN KEY ("category_uid")
+        REFERENCES "team_categories" ("category_uid")
+        ON DELETE CASCADE
 );
 
 -- =====================================================================

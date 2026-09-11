@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Max23strm/pitz-backend/calendar"
 	"github.com/Max23strm/pitz-backend/db"
 	"github.com/Max23strm/pitz-backend/helpers"
 	"github.com/Max23strm/pitz-backend/models"
@@ -17,26 +16,42 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: Agregar eventos por entidad
 func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	eventsSql := "SELECT event_uid, event_type, date, event_name, event_types.type_name, events_state.event_state FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid; "
+	entity_uid := r.URL.Query().Get("entity_uid")
+
+	if len(entity_uid) == 0 {
+		helpers.BadRequestResponse(w, "Entity is required", errors.New("No entity"), "ENTITY_REQUIRED")
+		return
+	}
+
+	eventsSql := "SELECT event_uid, event_type, date, event_name, event_types.type_name, events_state.event_state, events_state.event_state_type FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE entity_uid = $1;"
 	events := models.Events{}
 
-	datos, err := db.DB.Query(eventsSql)
+	datos, err := db.DB.Query(eventsSql, entity_uid)
 	if err != nil {
+		fmt.Println(err)
 		helpers.InternalServerErrorResponse(w, "Petition error")
+		return
 	}
+	defer datos.Close()
 
 	for datos.Next() {
 		dato := models.Event{}
-		err := datos.Scan(&dato.Event_uid, &dato.Event_type_uid, &dato.Date, &dato.Event_name, &dato.Type_name, &dato.Event_state)
+		err := datos.Scan(&dato.Event_uid, &dato.Event_type_uid, &dato.Date, &dato.Event_name, &dato.Type_name, &dato.Event_state, &dato.Event_state_type)
 		if err != nil {
 			helpers.BadRequestResponse(w, "Error scanning", err, "DATA_ERROR")
 			return
 		}
 		events = append(events, dato)
+	}
+
+	if err := datos.Err(); err != nil {
+		helpers.InternalServerErrorResponse(w, "Error reading events")
+		return
 	}
 
 	helpers.SuccessResponse(w, "succes", events)
@@ -46,14 +61,14 @@ func GetEventByIdHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state, address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = $1"
+	eventsSql := "SELECT event_uid, event_type, date, event_types.type_name, event_name, events_state.event_state,events_state.event_state_type,  address, coordinates FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE event_uid = $1"
 	vars := mux.Vars(r)
 
 	eventData := db.DB.QueryRow(eventsSql, vars["id"])
 
 	currentEvent := models.EventDetail{}
 
-	eventData.Scan(&currentEvent.Event_uid, &currentEvent.Event_type_uid, &currentEvent.Date, &currentEvent.Type_name, &currentEvent.Event_name, &currentEvent.Event_state, &currentEvent.Address, &currentEvent.Coordinates)
+	eventData.Scan(&currentEvent.Event_uid, &currentEvent.Event_type_uid, &currentEvent.Date, &currentEvent.Type_name, &currentEvent.Event_name, &currentEvent.Event_state, &currentEvent.Event_state_type, &currentEvent.Address, &currentEvent.Coordinates)
 
 	helpers.SuccessResponse(w, "succes", currentEvent)
 }
@@ -202,7 +217,12 @@ func GetEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
 		return
 	}
-	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"
+	dateStr := r.URL.Query().Get("date")         // e.g., "2025-06-01"
+	entityStr := r.URL.Query().Get("entity_uid") // e.g., "2025-06-01"
+	if len(entityStr) == 0 {
+		helpers.BadRequestResponse(w, "Entity is required", errors.New("No entity"), "ENTITY_REQUIRED")
+		return
+	}
 
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
@@ -215,47 +235,99 @@ func GetEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the last day of the month by going to the first day of the next month and subtracting a day
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
-	var googleEvents []map[string]interface{}
+
+	eventsSql := "SELECT event_uid, event_type, date, event_name, event_types.type_name, events_state.event_state FROM events INNER JOIN event_types ON events.event_type = event_types.event_type_uid INNER JOIN events_state ON events.event_state_uid = events_state.event_state_uid WHERE entity_uid = $1  AND events.date >= $2 AND events.date < $3;"
+	events := models.Events{}
+	// var googleEvents []map[string]interface{}
 
 	startOfMonthFormated := startOfMonth.Format("2006-01-02T15:04:05Z")
 	endOfMonthFormated := endOfMonth.Format("2006-01-02T15:04:05Z")
 
-	err, fetchedEvents := calendar.GetEventsByMonth(startOfMonthFormated, endOfMonthFormated)
+	datos, err := db.DB.Query(eventsSql, entityStr, startOfMonthFormated, endOfMonthFormated)
+
 	if err != nil {
-		helpers.InternalServerErrorResponse(w, "Error getting events")
+		fmt.Println(err)
+		helpers.InternalServerErrorResponse(w, "Petition error")
+		return
+	}
+	defer datos.Close()
+
+	for datos.Next() {
+		dato := models.Event{}
+		err := datos.Scan(&dato.Event_uid, &dato.Event_type_uid, &dato.Date, &dato.Event_name, &dato.Type_name, &dato.Event_state)
+		if err != nil {
+			helpers.BadRequestResponse(w, "Error scanning", err, "DATA_ERROR")
+			return
+		}
+		events = append(events, dato)
+	}
+
+	if err := datos.Err(); err != nil {
+		helpers.InternalServerErrorResponse(w, "Error reading events")
 		return
 	}
 
-	if len(fetchedEvents) == 0 {
-		helpers.SuccessResponse(w, "success", googleEvents)
-		return
-	}
-	for _, item := range fetchedEvents {
-		start := item.Start.DateTime
-		end := item.End.DateTime
-		if start == "" {
-			start = item.Start.Date
-		}
-		if end == "" {
-			end = item.End.Date
-		}
-
-		dato := map[string]interface{}{
-			"google_id":  item.Id,
-			"kind":       item.Kind,
-			"summary":    item.Summary,
-			"location":   item.Location,
-			"event_type": item.EventType,
-			"start":      start,
-			"end":        end,
-			"link":       item.HtmlLink,
-		}
-
-		googleEvents = append(googleEvents, dato)
-	}
-
-	helpers.SuccessResponse(w, "success", googleEvents)
+	helpers.SuccessResponse(w, "succes", events)
 }
+
+// func GetEventsByMonthHandler(w http.ResponseWriter, r *http.Request) {
+// 	if !validations.ValidateContext(w, r) {
+// 		return
+// 	}
+// 	dateStr := r.URL.Query().Get("date") // e.g., "2025-06-01"
+
+// 	date, err := time.Parse("2006-01-02", dateStr)
+// 	if err != nil {
+// 		helpers.BadRequestResponse(w, "Invalid date format. Use YYYY-MM-DD", err, "INVALID_DATE")
+// 		return
+// 	}
+
+// 	// Get the first day of the month
+// 	startOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+// 	// Get the last day of the month by going to the first day of the next month and subtracting a day
+// 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+// 	var googleEvents []map[string]interface{}
+
+// 	startOfMonthFormated := startOfMonth.Format("2006-01-02T15:04:05Z")
+// 	endOfMonthFormated := endOfMonth.Format("2006-01-02T15:04:05Z")
+
+// 	err, fetchedEvents := calendar.GetEventsByMonth(startOfMonthFormated, endOfMonthFormated)
+// 	if err != nil {
+// 		helpers.InternalServerErrorResponse(w, "Error getting events")
+// 		return
+// 	}
+
+// 	if len(fetchedEvents) == 0 {
+// 		helpers.SuccessResponse(w, "success", googleEvents)
+// 		return
+// 	}
+// 	for _, item := range fetchedEvents {
+// 		start := item.Start.DateTime
+// 		end := item.End.DateTime
+// 		if start == "" {
+// 			start = item.Start.Date
+// 		}
+// 		if end == "" {
+// 			end = item.End.Date
+// 		}
+
+// 		dato := map[string]interface{}{
+// 			"google_id":  item.Id,
+// 			"kind":       item.Kind,
+// 			"summary":    item.Summary,
+// 			"location":   item.Location,
+// 			"event_type": item.EventType,
+// 			"start":      start,
+// 			"end":        end,
+// 			"link":       item.HtmlLink,
+// 		}
+
+// 		googleEvents = append(googleEvents, dato)
+// 	}
+
+// 	helpers.SuccessResponse(w, "success", googleEvents)
+// }
 
 func GetEventsStatesHandler(w http.ResponseWriter, r *http.Request) {
 	if !validations.ValidateContext(w, r) {
@@ -271,7 +343,7 @@ func GetEventsStatesHandler(w http.ResponseWriter, r *http.Request) {
 
 	for datos.Next() {
 		dato := models.EventState{}
-		err := datos.Scan(&dato.Event_state_uid, &dato.Event_state)
+		err := datos.Scan(&dato.Event_state_uid, &dato.Event_state, &dato.Event_state_type)
 		if err != nil {
 			helpers.BadRequestResponse(w, "Error requesting", err, "ERROR_OBTAINING")
 			return

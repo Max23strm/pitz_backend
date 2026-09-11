@@ -1,4 +1,4 @@
-# pitz_backend
+# vulon_backend
 
 API REST en Go para la gestión administrativa de un club deportivo (PITZ). Permite administrar jugadores, eventos, asistencia, pagos, gastos y usuarios, con autenticación por JWT y reportes en Excel.
 
