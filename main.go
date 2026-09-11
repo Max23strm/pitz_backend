@@ -63,6 +63,20 @@ func main() {
 	r.HandleFunc(baseUrl+"/newEntity", routes.InsertEntity).Methods("POST")
 	r.Handle(baseUrl+"/assignEntity", middleware.AuthMiddleware(http.HandlerFunc(routes.AssignEntity))).Methods("POST")
 
+	//TEAMS
+	r.HandleFunc(baseUrl+"/teams", routes.GetTeamsByEntityHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/teams/{id}", routes.GetTemsByIdHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/teams/new", routes.NewTeamHandler).Methods("POST")
+	// r.HandleFunc(baseUrl+"/teams/edit/{id}", routes.EditTeamHandler).Methods("PUT")
+	r.Handle(baseUrl+"/team/assign", middleware.AuthMiddleware(http.HandlerFunc(routes.AssignTeamHandler))).Methods("POST")
+	r.Handle(baseUrl+"/team/unassign", middleware.AuthMiddleware(http.HandlerFunc(routes.UnassignTeamHandler))).Methods("DELETE")
+
+	//TEAMS CATEGORIES
+	r.HandleFunc(baseUrl+"/teams-categories", routes.GetTeamsCategoriesByEntityHandler).Methods("GET")
+	r.HandleFunc(baseUrl+"/teams-categories/new", routes.NewTeamCatHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/teams-categories/assign", routes.AssingCategoryHandler).Methods("POST")
+	r.HandleFunc(baseUrl+"/teams-categories/unassign", routes.UnssingCategoryHandler).Methods("POST")
+
 	//EVENTS
 	r.HandleFunc(baseUrl+"/events", routes.GetEventsHandler).Methods("GET")
 	r.HandleFunc(baseUrl+"/events/eventById/{id}", routes.GetEventByIdHandler).Methods("GET")

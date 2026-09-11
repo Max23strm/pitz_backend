@@ -3,23 +3,25 @@ package models
 import "time"
 
 type Event struct {
-	Event_uid      string    `json:"event_uid"`
-	Event_type_uid string    `json:"event_type_uid"`
-	Date           time.Time `json:"date"`
-	Event_name     string    `json:"event_name"`
-	Type_name      string    `json:"type_name"`
-	Event_state    string    `json:"event_state"`
+	Event_uid        string    `json:"event_uid"`
+	Event_type_uid   string    `json:"event_type_uid"`
+	Date             time.Time `json:"date"`
+	Event_name       string    `json:"event_name"`
+	Type_name        string    `json:"type_name"`
+	Event_state      string    `json:"event_state"`
+	Event_state_type int       `json:"event_state_type"`
 }
 
 type EventDetail struct {
-	Event_uid      string    `json:"event_uid"`
-	Event_type_uid string    `json:"event_type_uid"`
-	Date           time.Time `json:"event_date"`
-	Event_name     string    `json:"event_name"`
-	Type_name      string    `json:"event_type_name"`
-	Event_state    int8      `json:"event_state"`
-	Address        *string   `json:"address"`
-	Coordinates    *string   `json:"coordinates"`
+	Event_uid        string    `json:"event_uid"`
+	Event_type_uid   string    `json:"event_type_uid"`
+	Date             time.Time `json:"event_date"`
+	Event_name       string    `json:"event_name"`
+	Type_name        string    `json:"event_type_name"`
+	Event_state      int8      `json:"event_state"`
+	Event_state_type int       `json:"event_state_type"`
+	Address          *string   `json:"address"`
+	Coordinates      *string   `json:"coordinates"`
 }
 
 type EventPost struct {
@@ -47,8 +49,9 @@ type EventType struct {
 }
 
 type EventState struct {
-	Event_state_uid string `json:"event_state_uid"`
-	Event_state     string `json:"event_state_name"`
+	Event_state_uid  string `json:"event_state_uid"`
+	Event_state      string `json:"event_state_name"`
+	Event_state_type string `json:"event_state_type"`
 }
 
 type Asistance struct {

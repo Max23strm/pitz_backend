@@ -22,6 +22,7 @@ func HomeHanlder(w http.ResponseWriter, r *http.Request) {
 	expensesSql := "SELECT  COALESCE(SUM(expenses.amount), 0) AS monthly_expense FROM \"expenses\" WHERE expenses.delete_flag = 0 AND expenses.date BETWEEN $1 AND $2;"
 
 	dateStr := r.URL.Query().Get("date")
+	// entityStr := r.URL.Query().Get("entity_uid")
 
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
