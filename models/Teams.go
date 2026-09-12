@@ -1,13 +1,12 @@
 package models
 
 type Team struct {
-	Team_uid      string   `json:"team_uid"`
-	Description   string   `json:"description"`
-	Entity_uid    string   `json:"entity_uid"`
-	Country_code  string   `json:"country_code"`
-	Currency_code string   `json:"currency_code"`
-	Entity_name   string   `json:"entity_name"`
-	Categories    []string `json:"categories"`
+	Team_uid         string   `json:"team_uid"`
+	Description      string   `json:"description"`
+	Entity_uid       string   `json:"entity_uid"`
+	Entity_name      string   `json:"entity_name"`
+	Players_assigned int      `json:"players_assigned"`
+	Categories       []string `json:"categories"`
 }
 
 type TeamsDetails struct {

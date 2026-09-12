@@ -32,9 +32,13 @@ func GetTeamsByEntityHandler(w http.ResponseWriter, r *http.Request) {
 			t.team_uid,
 			t.description,
 			e.entity_uid,
-			e.country_code,
-			e.currency_code,
 			e.name AS entity_name,
+			(
+				SELECT COUNT(DISTINCT pa.player_uid)
+				FROM players_assignation AS pa
+				WHERE pa.team_uid = t.team_uid
+				AND pa.delete_flag = 0
+			) AS players_assigned,
 			COALESCE(
 				array_agg(tc.description ORDER BY tc.description)
 				FILTER (WHERE tc.category_uid IS NOT NULL),
@@ -76,9 +80,8 @@ func GetTeamsByEntityHandler(w http.ResponseWriter, r *http.Request) {
 			&dato.Team_uid,
 			&dato.Description,
 			&dato.Entity_uid,
-			&dato.Country_code,
-			&dato.Currency_code,
 			&dato.Entity_name,
+			&dato.Players_assigned,
 			pq.Array(&dato.Categories),
 		)
 		if err != nil {
